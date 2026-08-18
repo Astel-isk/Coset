@@ -23,7 +23,22 @@
 ## ドキュメント
 
 - [DESIGN.md](DESIGN.md) — ゲーム設計・コンテンツ・技術構成の詳細
+- [CLAUDE.md](CLAUDE.md) — 開発の分担・規約・簡易版の制約
 
 ## ステータス
 
-設計フェーズ。MVP（シーザー暗号ステージ＋モジュラー時計盤）の実装を次の一手として予定。
+雛形のみ（TypeScript + React + Vite + Vitest）。ステージ 1（シーザー暗号＋モジュラー時計盤）は未実装。
+
+## 開発
+
+```bash
+npm install
+npm run dev       # 開発サーバー
+npm run verify    # 型検査 → Lint → テスト
+npm run build     # dist/ に出力
+npm run preview   # ビルド結果をローカルで配信（展示用）
+```
+
+## ライセンス
+
+MIT License（[LICENSE](LICENSE)）
