@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# 同じブランチに続けて push したとき、古い実行を打ち切って最新だけを走らせる。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
