@@ -6,3 +6,6 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+
+# Claude Code の個人設定（.claude/settings.json はリポジトリで共有する）
+.claude/settings.local.json

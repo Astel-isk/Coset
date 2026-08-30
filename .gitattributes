@@ -1,2 +1,11 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# 改行コードはリポジトリ内・チェックアウト後ともLFに統一する。
+#
+# Windows向けGitインストーラの既定は core.autocrlf=true で、この設定のままだと
+# チェックアウト時に全テキストファイルがCRLFに変換される（この環境も実際にそうなっている）。
+# リポジトリ内はLFなので普段は表面化しないが、フォーマッタを入れた時点で
+# 「1文字も編集していないのに全ファイルが差分扱いになる」形で踏む。CIはLinuxで走るので
+# greenのままになり、Windowsのローカルだけが壊れる。先に固定しておく。
+#
+# text=auto … Gitがテキストと判定したファイルだけを対象にする（バイナリは除外）
+# eol=lf    … チェックアウト時にLFで書き出す（core.autocrlfの設定より優先される）
+* text=auto eol=lf
