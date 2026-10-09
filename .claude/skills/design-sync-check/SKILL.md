@@ -52,7 +52,7 @@ grep -rn "from '\(react\|\.\./ui\|\.\./\.\./ui\)" src/core || echo "UI依存な�
 grep -rn "attack" src/ui src/tools src/stages 2>/dev/null || echo "UIからのattack参照なし"
 ```
 
-- `core` の `attack` が UI から直接呼ばれていないか(ヒント生成と将来の防御モード専用)
+- `core` の `attack` が UI から直接呼ばれていないか(将来の防御モードの準備。画面からは使わない)
 - 「総当たり」「素因数分解」をプレイヤーが直接叩けるボタンが増えていないか
   (`src/ui` の文言を `総当たり|ブルートフォース|素因数分解` で検索する)
 - 答えに近づく情報がツール側に漏れていないか(ヒント側に集約されているか)
