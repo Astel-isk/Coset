@@ -3,7 +3,9 @@ import type { PointerEvent } from 'react';
 import { decrypt } from '../stages/vigenereStub'; // core/ciphers/vigenere.ts の実装後にここを差し替える
 import { ALPHABET, normalizeAngleDelta, pairWords } from './clock';
 import { Dial } from './Dial';
-import { highlightedCells, hoverTarget, outerIndexOf, plainLetterOf, usedCipherLetters } from './mapping';
+import { restoreSentence } from './formula';
+import { KeyCalculator } from './KeyCalculator';
+import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { currentKeys, initialState, ownersOfWords, reducer, totalTried } from './multiState';
@@ -11,6 +13,9 @@ import type { ToolProps } from './types';
 
 /** ホイールを何ピクセルぶん回すと 1 目盛り進むか */
 const WHEEL_PX_PER_STEP = 50;
+
+/** 鍵の計算機に手がかりの単語として渡す与件の id（stages/vigenere.ts の最初の単語。EXHIBITION.md「代数を使う」） */
+const HINT_WORD_ID = 'first-word';
 
 /** 円盤の番号の表記（① ② ③ …） */
 function circled(index: number): string {
@@ -21,6 +26,8 @@ function circled(index: number): string {
  * 1 語の 1 段。1 文字ずつ同じ幅のセルに入れ、上段と下段の字の大きさが違っても文字が縦に揃うようにする。
  * 操作対象の円盤が受け持つ文字を濃く（own）、他を薄く（dim）描く。
  * 文字にマウスを重ねると onHover に位置を渡し（離れたら null）、lit の文字は朱で光らせる。
+ * onPick を渡した行（上段の暗号文）は、文字のクリックを位置で通知し、picked の文字は朱で示す
+ * （鍵の計算機への入力。重ねて光らせるのは強調で、クリックは入力）。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
 function OwnedRow({
@@ -31,6 +38,8 @@ function OwnedRow({
   word,
   lit,
   onHover,
+  onPick,
+  picked = null,
 }: {
   readonly className: string;
   /** 1 文字ずつの表示 */
@@ -41,15 +50,19 @@ function OwnedRow({
   readonly word: number;
   readonly lit: readonly boolean[];
   readonly onHover: (pos: CellPos | null) => void;
+  readonly onPick?: (pos: CellPos) => void;
+  /** 計算機に選んだ文字の、この語の中での添字（この語でなければ null） */
+  readonly picked?: number | null;
 }) {
   return (
     <span className={className}>
       {cells.map((cell, i) => (
         <span
           key={i}
-          className={`${owners[i] === active ? 'cell own' : 'cell dim'}${lit[i] ? ' hl' : ''}`}
+          className={`${owners[i] === active ? 'cell own' : 'cell dim'}${lit[i] ? ' hl' : ''}${onPick && owners[i] !== null ? ' pick' : ''}${picked === i ? ' sel' : ''}`}
           onMouseEnter={() => onHover({ word, index: i })}
           onMouseLeave={() => onHover(null)}
+          onClick={onPick && owners[i] !== null ? () => onPick({ word, index: i }) : undefined}
         >
           {cell}
         </span>
@@ -67,7 +80,7 @@ function OwnedRow({
  * 戻した文は全円盤の鍵で復号した文全体を onCandidate で返す。
  * 正解を知らない。判定はしない。全鍵を自動で試す機能は持たない（DESIGN.md §4）。
  */
-export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts }: ToolProps<'multi-clock'>) {
+export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, onAttempts }: ToolProps<'multi-clock'>) {
   const { modulus, count } = mount;
   const [state, dispatch] = useReducer(reducer, count, initialState);
   const dialsRef = useRef<HTMLDivElement>(null);
@@ -95,6 +108,11 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
   const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
   // 対応表は操作対象の円盤の 1 本だけ。電文の出現は、その円盤が受け持つ位置の文字だけで判定する
   const used = useMemo(() => usedCipherLetters(cipherWords, owners, state.active), [cipherWords, owners, state.active]);
+  // 鍵の計算機。選んだ文字は位置で持ち（電文の上段の暗号文の文字と、手がかりの単語の文字）、文字は毎回そこから引く
+  const hintWord = givens.find((g) => g.id === HINT_WORD_ID)?.value ?? null;
+  const [calcCipher, setCalcCipher] = useState<CellPos | null>(null);
+  const [calcPlain, setCalcPlain] = useState<number | null>(null);
+  const calcCipherLetter = calcCipher ? (cipherWords[calcCipher.word]?.[calcCipher.index] ?? null) : null;
   const triedCount = totalTried(state);
   const total = modulus * count;
   const active = state.active;
@@ -234,6 +252,21 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
           進める →
         </button>
       </div>
+      {hintWord !== null ? (
+        <KeyCalculator
+          hintWord={hintWord}
+          cipherLetter={calcCipherLetter}
+          plainIndex={calcPlain}
+          dialLabel={circled(active)}
+          modulus={modulus}
+          onPickPlain={setCalcPlain}
+          onClear={() => {
+            setCalcCipher(null);
+            setCalcPlain(null);
+          }}
+          onAlign={(key) => dispatch({ type: 'align', key, modulus })}
+        />
+      ) : null}
       <MappingStrip
         title={`${circled(active)} の対応表`}
         k={keys[active] ?? 0}
@@ -243,7 +276,14 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
         dial={active + 1}
       />
       <section className="tool-text paper" aria-label="暗号文と戻した文">
-        <p className="paper-head">{heading}</p>
+        <p className="paper-head">
+          <span>{heading}</span>
+          <span className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
+            {target
+              ? restoreSentence(target.letter, keys[target.owner] ?? 0, modulus, circled(target.owner))
+              : '電文の文字にマウスを重ねると、円盤の対応が光る'}
+          </span>
+        </p>
         <div className="words">
           {pairs.map((pair, i) => {
             const wordOwners = owners[i] ?? [];
@@ -257,6 +297,8 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  onPick={hintWord !== null ? setCalcCipher : undefined}
+                  picked={calcCipher?.word === i ? calcCipher.index : null}
                 />
                 <OwnedRow
                   className="word-restored"
@@ -280,17 +322,6 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
             );
           })}
         </div>
-        <p className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
-          {target ? (
-            <>
-              暗号文の <strong className="mono">{target.letter}</strong> は、{circled(target.owner)} の外側の{' '}
-              <strong className="mono">{target.letter}</strong> の内側にある{' '}
-              <strong className="mono">{plainLetterOf(target.letter, keys[target.owner] ?? 0, modulus)}</strong> に戻る
-            </>
-          ) : (
-            '電文の文字にマウスを重ねると、円盤の対応が光る'
-          )}
-        </p>
       </section>
     </div>
   );

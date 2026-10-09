@@ -62,6 +62,7 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
           mount={mount}
           ciphertext={puzzle.ciphertext}
           heading={paperHead(record)}
+          givens={givens}
           onCandidate={handleCandidate}
           onAttempts={handleAttempts}
         />

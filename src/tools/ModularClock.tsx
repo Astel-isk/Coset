@@ -3,7 +3,8 @@ import type { PointerEvent } from 'react';
 import { decrypt } from '../stages/caesarStub'; // core/ciphers/caesar.ts の実装後にここを差し替える
 import { ALPHABET, mod, normalizeAngleDelta, pairWords } from './clock';
 import { Dial } from './Dial';
-import { highlightedCells, hoverTarget, outerIndexOf, plainLetterOf, usedCipherLetters } from './mapping';
+import { restoreSentence } from './formula';
+import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { ownersOfWords } from './multiState';
@@ -15,7 +16,7 @@ const WHEEL_PX_PER_STEP = 50;
 interface State {
   /** 内周を回した目盛りの累計（剰余に畳まない。アニメーションが巻き戻らないように） */
   readonly pos: number;
-  /** これまでに試したずらし量（剰余）。開始時の 0 も数える */
+  /** これまでに試したずらし量（剰余）。開始時の 0 は数えない（来場者が操作して止めた位置だけを数える） */
   readonly tried: ReadonlySet<number>;
 }
 
@@ -66,7 +67,7 @@ function WordRow({
   );
 }
 
-const INITIAL: State = { pos: 0, tried: new Set([0]) };
+const INITIAL: State = { pos: 0, tried: new Set<number>() };
 
 /**
  * モジュラー時計盤（DESIGN.md §4）。
@@ -230,15 +231,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
           ))}
         </div>
         <p className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
-          {target ? (
-            <>
-              暗号文の <strong className="mono">{target.letter}</strong> は、外側の{' '}
-              <strong className="mono">{target.letter}</strong> の内側にある{' '}
-              <strong className="mono">{plainLetterOf(target.letter, k, modulus)}</strong> に戻る
-            </>
-          ) : (
-            '電文の文字にマウスを重ねると、円盤の対応が光る'
-          )}
+          {target ? restoreSentence(target.letter, k, modulus) : '電文の文字にマウスを重ねると、円盤の対応が光る'}
         </p>
       </section>
     </div>

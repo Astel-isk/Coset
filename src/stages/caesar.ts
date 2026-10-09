@@ -129,6 +129,7 @@ export const caesarStage: Stage = {
   },
   debrief: {
     lead: '{total} 通りのうち',
+    countSuffix: '通りで破った',
     rows: [
       { label: 'シーザー暗号の鍵', value: '{total}', unit: '通り' },
       {

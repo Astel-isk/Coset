@@ -20,6 +20,11 @@ export type StageId = 'caesar' | 'vigenere';
  * 出題ごとに変わる与件（最初の単語など）は Puzzle.givens が持つ。
  */
 export interface Given {
+  /**
+   * 与件の識別子（任意）。ツールが特定の与件を名前で引くときに使う
+   * （ステージ 2 の最初の単語は 'first-word'。鍵の計算機が手がかりの文字として並べる）
+   */
+  readonly id?: string;
   readonly label: string;
   readonly value: string;
   /** value の後ろに添える語（例: らしい） */
@@ -103,8 +108,10 @@ export interface DebriefRow {
  * 文中の `{total}` は、時計盤が返す鍵の総数（ステージ 1 は 26、ステージ 2 は 78）に画面が置き換える。
  */
 export interface Debrief {
-  /** 「n 通りで破った」の上に出す文（例: `{total} 通りのうち`、`分ければ {total} 通りのうち`） */
+  /** 大きな数字（試した鍵の数 n）の上に出す文（例: `{total} 通りのうち`、`あなたが試した鍵`） */
   readonly lead: string;
+  /** 大きな数字の後ろに添える語（例: `通りで破った`、`通り`） */
+  readonly countSuffix: string;
   /** 対比の行。上から順に並べる */
   readonly rows: readonly DebriefRow[];
   /** 締めの一言 */

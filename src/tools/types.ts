@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { Given } from '../stages/types';
 
 /**
  * 可視化ツールの型。
@@ -37,11 +38,17 @@ export interface ToolProps<K extends ToolId> {
   readonly ciphertext: string;
   /** 電文の紙に出す見出し（例: 電文 ・ 傍受 22:14 ・ 発信元 不明）。傍受時刻は出題ごとに変わるのでランナーから渡す */
   readonly heading: string;
+  /**
+   * 与件（Puzzle.givens とステージ共通の与件を並べたもの）。画面に出す公開情報で、正解の平文全体は含まない。
+   * ツールは必要な与件を `id` で引く（例: 鍵の計算機は 'first-word' の値を手がかりの文字として並べる）
+   */
+  readonly givens: readonly Given[];
   /** プレイヤーの操作で候補平文が変わったときに呼ぶ */
   readonly onCandidate: (plaintext: string) => void;
   /**
    * 試した鍵の数が変わったときに呼ぶ（tried: これまでに試した鍵の種類数、total: 鍵の総数）。
-   * クリア画面の「26 通りのうち n 通り試して破った」に使う（EXHIBITION.md）。
+   * クリア画面の「26 通りのうち n 通りで破った」に使う（EXHIBITION.md）。
+   * 開始時のずらし量 0 は数えない（来場者が操作して止めた位置だけを数える）。
    */
   readonly onAttempts: (tried: number, total: number) => void;
 }

@@ -13,6 +13,8 @@ interface MappingStripProps {
   readonly highlight: string | null;
   /** 円盤の番号（1 起点。複数枚のとき、テスト・確認用に付ける） */
   readonly dial?: number;
+  /** 暗号文の行の上に番号（A=0 … Z=25）を小さく添えるか。既定は添える */
+  readonly numbers?: boolean;
 }
 
 /**
@@ -20,12 +22,12 @@ interface MappingStripProps {
  * 上の行は暗号文の A〜Z（固定）、下の行は今の鍵でその内側に来る平文の文字。A の列は朱の枠で囲み、
  * 円盤の読み取り窓と同じ列だと分かるようにする。表示は渡された鍵から毎回作り、状態を持たない。
  */
-export function MappingStrip({ title, k, modulus, used, highlight, dial }: MappingStripProps) {
+export function MappingStrip({ title, k, modulus, used, highlight, dial, numbers = true }: MappingStripProps) {
   const columns = mappingColumns(k, modulus);
-  const cellClass = (cipher: string, row: 'top' | 'bottom'): string => {
-    const classes = ['map-cell', `map-${row}`];
+  const cellClass = (cipher: string, row: 'num' | 'top' | 'bottom'): string => {
+    const classes = row === 'num' ? ['map-num'] : ['map-cell', `map-${row}`];
     classes.push(used.has(cipher) ? 'used' : 'unused');
-    if (cipher === columns[0]?.cipher) classes.push('map-a');
+    if (row !== 'num' && cipher === columns[0]?.cipher) classes.push('map-a');
     if (cipher === highlight) classes.push('hl');
     return classes.join(' ');
   };
@@ -33,6 +35,16 @@ export function MappingStrip({ title, k, modulus, used, highlight, dial }: Mappi
     <section className="mapping" aria-label={title} data-testid="mapping-strip" data-dial={dial}>
       <p className="mapping-title">{title}</p>
       <div className="mapping-grid" style={{ '--cols': modulus } as CSSProperties}>
+        {numbers ? (
+          <>
+            <span className="map-head map-head-num">番号</span>
+            {columns.map((c, i) => (
+              <span key={`n${c.cipher}`} className={cellClass(c.cipher, 'num')} data-col={c.cipher} data-row="number">
+                {i}
+              </span>
+            ))}
+          </>
+        ) : null}
         <span className="map-head map-head-top">暗号文</span>
         {columns.map((c) => (
           <span key={`c${c.cipher}`} className={cellClass(c.cipher, 'top')} data-col={c.cipher} data-row="cipher">

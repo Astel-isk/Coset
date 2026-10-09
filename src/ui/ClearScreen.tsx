@@ -41,7 +41,7 @@ export function ClearScreen({ game, tried, total, revisited, hasNext, onNext, on
       <section className="clear-result">
         <p className="clear-count-sub">{fillPlaceholders(debrief.lead, values)}</p>
         <p className="clear-count">
-          <strong>{tried}</strong> 通りで破った
+          <strong>{tried}</strong> {debrief.countSuffix}
         </p>
         <dl className="versus">
           {debrief.rows.map((row) => (

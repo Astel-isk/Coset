@@ -3,7 +3,7 @@
  * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
  * システムフォントのみ使い、外部リソースは参照しない。
  * 色の約束: 朱（--accent）は 主ボタン・円盤の読み取り窓・判子・円盤の現在の鍵の目盛り・開いたヒントのカード名・
- * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤） にだけ使う。
+ * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ文字 にだけ使う。
  * 平面的に描く（グラデーション・影・発光を使わない）。
  */
 :root {
@@ -463,6 +463,23 @@ button.primary {
   background: var(--plate);
 }
 
+/* 番号の行（A=0 … Z=25）。暗号文の行の上に小さく添える */
+.map-num {
+  text-align: center;
+  font-size: 0.62rem;
+  line-height: 1.25;
+  color: var(--window-off);
+}
+
+.map-num.used {
+  color: var(--sub);
+}
+
+.map-num.hl {
+  color: #fff;
+  background: var(--accent);
+}
+
 .map-top.used {
   color: var(--sub);
 }
@@ -497,6 +514,15 @@ button.primary {
   line-height: 1.4;
   white-space: nowrap;
   color: var(--paper-faint);
+}
+
+/* ステージ 2 は高さを使わないよう、重ねたときの 1 行を電文の紙の見出しの右に置く */
+.paper-head .hover-note {
+  margin: 0;
+  min-height: 0;
+  font-size: 0.8rem;
+  font-family: var(--sans);
+  text-align: right;
 }
 
 .hover-note.on {
@@ -637,25 +663,40 @@ button.primary {
 
 .play[data-tool='multi-clock'] {
   --dial: min(max(28vh, calc(36vh - 60px)), 19vw);
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) 9rem;
   grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto auto;
+  /* 1 行目は 記録・フレーバー・最初から。円盤の右に、与件・鍵の計算機・操作ボタン・不正解の表示を積む */
   grid-template-areas:
-    'head head'
-    'dials flavor'
-    'dials controls'
-    'dials actions'
-    'dials givens'
-    'map map'
-    'paper paper'
-    'hints hints';
+    'rec flv rst'
+    'dials givens givens'
+    'dials calc calc'
+    'dials ctl act'
+    'dials fb fb'
+    'map map map'
+    'paper paper paper'
+    'hints hints hints';
 }
 
+/* 見出しの行は、記録・フレーバー・最初から を 1 行に並べる（高さを使わないため）。ボタンと記録は箱を作らず、グリッドの項目として置く */
 .play[data-tool='multi-clock'] .play-head {
-  grid-area: head;
+  display: contents;
+}
+
+.play[data-tool='multi-clock'] .play-head .record {
+  grid-area: rec;
+  align-self: center;
+}
+
+.play[data-tool='multi-clock'] .play-head button {
+  grid-area: rst;
+  justify-self: end;
 }
 
 .play[data-tool='multi-clock'] .flavor {
-  grid-area: flavor;
+  grid-area: flv;
+  align-self: center;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .play[data-tool='multi-clock'] .tool-dials {
@@ -663,30 +704,42 @@ button.primary {
 }
 
 .play[data-tool='multi-clock'] .tool-controls {
-  grid-area: controls;
+  grid-area: ctl;
 }
 
 .play[data-tool='multi-clock'] .play-actions {
-  grid-area: actions;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.2rem 1rem;
+  display: contents;
+}
+
+.play[data-tool='multi-clock'] .play-actions button {
+  grid-area: act;
 }
 
 .play[data-tool='multi-clock'] .feedback {
-  flex-basis: 100%;
-  min-height: 1.6em;
+  grid-area: fb;
+  min-height: 1.4em;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .play[data-tool='multi-clock'] .givens {
   grid-area: givens;
-  align-self: end;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.1rem 1.4rem;
+}
+
+.play[data-tool='multi-clock'] .key-calc {
+  grid-area: calc;
 }
 
 .play[data-tool='multi-clock'] .mapping {
   grid-area: map;
-  --map-col: 1.7rem;
   justify-self: start;
+}
+
+.play[data-tool='multi-clock'] .mapping-grid {
+  --map-col: 1.3rem;
 }
 
 .play[data-tool='multi-clock'] .tool-text {
@@ -699,7 +752,7 @@ button.primary {
 }
 
 .play[data-tool='multi-clock'] .hint {
-  min-height: 5.2rem;
+  min-height: 0;
   padding: 0.4em 0.8em;
 }
 
@@ -741,6 +794,126 @@ button.primary {
 
 .dial-tick.current.off {
   stroke: var(--ink);
+}
+
+/* ---- 鍵の計算機（ステージ 2）: 暗号文の文字 − 平文の文字 = 鍵 ---- */
+
+.key-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.3rem 0.8rem 0.4rem;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+}
+
+.calc-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+}
+
+.calc-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.calc-label {
+  font-size: 0.8rem;
+  color: var(--sub);
+}
+
+.calc-letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+}
+
+button.calc-letter {
+  min-height: 1.9rem;
+  width: 1.6rem;
+  padding: 0;
+  font: 700 1.1rem/1 var(--mono);
+  border-width: 2px;
+  border-radius: 4px;
+}
+
+/* 選んだ文字は朱で示す（電文の上段・手がかりの文字とも） */
+button.calc-letter.sel {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.calc-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.calc-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.calc-field-label {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--sub);
+}
+
+.calc-value {
+  display: flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0 0.6rem;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  font: 700 1.2rem/1.2 var(--mono);
+  white-space: nowrap;
+}
+
+/* 空の欄の案内は薄く */
+.calc-value.guide {
+  font: 0.78rem/1.2 var(--sans);
+  color: var(--window-off);
+}
+
+.calc-op {
+  padding-bottom: 0.1rem;
+  font-size: 1.4rem;
+  line-height: 1.9rem;
+  color: var(--sub);
+}
+
+.calc-expression {
+  min-height: 1.4em;
+  font: 700 1.1rem/1.3 var(--mono);
+  white-space: nowrap;
+}
+
+.calc-buttons {
+  display: flex;
+  gap: 0.6rem;
+}
+
+button.calc-align,
+button.calc-clear {
+  min-height: 2.1rem;
+  padding-block: 0.1em;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button:disabled:hover {
+  border-color: var(--line);
 }
 
 .tool-controls {
@@ -819,8 +992,14 @@ button.primary {
   color: #b9b09b;
 }
 
-/* 電文の文字に重ねたときの強調（上段・下段・番号行とも）。操作対象の濃淡より優先する */
-.words .word .cell.hl {
+/* 計算機に入れる暗号文の文字（上段）はクリックできる */
+.word-cipher .cell.pick {
+  cursor: pointer;
+}
+
+/* 電文の文字に重ねたときの強調（上段・下段・番号行とも）と、計算機に選んだ文字。操作対象の濃淡より優先する */
+.words .word .cell.hl,
+.words .word .cell.sel {
   color: #fff;
   background: var(--accent);
   border-radius: 3px;

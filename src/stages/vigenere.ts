@@ -108,7 +108,9 @@ export const vigenereStage: Stage = {
     { label: '手がかり', body: '鍵は 3 文字。電文の文字は 3 つおきに同じ円盤で戻る' },
     {
       label: '仕組み',
-      body: '① は 1・4・7…文字目だけを動かす。最初の単語と 1 文字ずつ照らし合わせよう',
+      body:
+        '暗号文 − 平文 = 鍵（26 で割った余り）。最初の単語の 1 文字目で引き算すれば ① の鍵が出る。'
+        + '鍵の計算機を使おう',
     },
     { label: '答え', body: '鍵は ①={k1}、②={k2}、③={k3}' },
   ],
@@ -116,10 +118,15 @@ export const vigenereStage: Stage = {
     normalize: { ignoreCase: true, ignoreWhitespace: true, ignorePunctuation: true },
   },
   debrief: {
-    lead: '分ければ {total} 通りのうち',
-    // 26 × 26 × 26 を桁のまま見せる
-    rows: [{ label: 'まとめて試すと', value: '17,576', unit: '通り' }],
-    closing: '長い鍵も、分けて考えれば 1 枚ずつ破れる',
+    lead: 'あなたが試した鍵',
+    countSuffix: '通り',
+    // 3 段の対比: 26 × 26 × 26 を桁のまま見せ、26 × 3 に減らし、さらに計算の 3 回へ
+    rows: [
+      { label: 'まとめて試すと', value: '17,576', unit: '通り' },
+      { label: '1 枚ずつ分ければ', value: '78', unit: '通り' },
+      { label: '計算すれば', value: '3', unit: '回' },
+    ],
+    closing: '分けて考え、計算で鍵を出す。これが代数の武器だ',
   },
   notes: NOTES,
   generate(random: () => number): Puzzle {
@@ -129,7 +136,8 @@ export const vigenereStage: Stage = {
     if (!message) throw new Error('出題の候補が空');
     const givens: readonly Given[] = [
       { label: '鍵の長さ', value: `${KEY_LENGTH} 文字` },
-      { label: '最初の単語は', value: firstWord(message.plaintext), suffix: 'らしい' },
+      // id は鍵の計算機が手がかりの文字として引く（ツールは正解の平文全体を知らないまま）
+      { id: 'first-word', label: '最初の単語は', value: firstWord(message.plaintext), suffix: 'らしい' },
     ];
     return {
       ciphertext: encrypt(message.plaintext, keys),

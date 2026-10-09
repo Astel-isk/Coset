@@ -78,6 +78,11 @@ describe('caesarStage.generate', () => {
     expect(caesarStage.hints[2].body).toContain('{key}');
   });
 
+  it('クリア画面の文面は「{total} 通りのうち／n 通りで破った」のまま', () => {
+    expect(caesarStage.debrief.lead).toBe('{total} 通りのうち');
+    expect(caesarStage.debrief.countSuffix).toBe('通りで破った');
+  });
+
   it('ヒントのカード名は 手がかり・仕組み・答え の順', () => {
     expect(caesarStage.hints.map((h) => h.label)).toEqual(['手がかり', '仕組み', '答え']);
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fillPlaceholders } from '../ui/logic';
-import { firstWord, MESSAGES, vigenereStage } from './vigenere';
+import { firstWord, KEY_LENGTH, MESSAGES, vigenereStage } from './vigenere';
 import { decrypt } from './vigenereStub';
 
 /** 再現できる擬似乱数（テスト用の線形合同法） */
@@ -64,12 +64,12 @@ describe('vigenereStage.generate', () => {
     }
   });
 
-  it('与件は「鍵の長さ 3 文字」と「最初の単語」の 2 つで、最初の単語は平文の先頭と一致する', () => {
+  it('与件は「鍵の長さ 3 文字」と「最初の単語」の 2 つで、最初の単語は id "first-word" を持ち平文の先頭と一致する', () => {
     for (let seed = 0; seed < 50; seed++) {
       const puzzle = vigenereStage.generate(seeded(seed));
       expect(puzzle.givens).toEqual([
         { label: '鍵の長さ', value: '3 文字' },
-        { label: '最初の単語は', value: puzzle.plaintext.split(' ')[0], suffix: 'らしい' },
+        { id: 'first-word', label: '最初の単語は', value: puzzle.plaintext.split(' ')[0], suffix: 'らしい' },
       ]);
     }
   });
@@ -127,11 +127,25 @@ describe('ステージ 2 の定義', () => {
     }
   });
 
-  it('クリア画面の文面: 分けた場合の総数の差し込みと、まとめて試すと 17,576 通り', () => {
+  it('クリア画面の文面: 「あなたが試した鍵 n 通り」と、17,576 通り → 78 通り → 3 回の 3 段の対比', () => {
     const { debrief } = vigenereStage;
-    expect(fillPlaceholders(debrief.lead, { total: '78' })).toBe('分ければ 78 通りのうち');
-    expect(debrief.rows).toEqual([{ label: 'まとめて試すと', value: '17,576', unit: '通り' }]);
-    expect(debrief.closing).toBe('長い鍵も、分けて考えれば 1 枚ずつ破れる');
+    expect(debrief.lead).toBe('あなたが試した鍵');
+    expect(debrief.countSuffix).toBe('通り');
+    expect(debrief.rows).toEqual([
+      { label: 'まとめて試すと', value: '17,576', unit: '通り' },
+      { label: '1 枚ずつ分ければ', value: '78', unit: '通り' },
+      { label: '計算すれば', value: '3', unit: '回' },
+    ]);
+    expect(debrief.closing).toBe('分けて考え、計算で鍵を出す。これが代数の武器だ');
     expect(26 ** 3).toBe(17576);
+    expect(26 * 3).toBe(78);
+    expect(KEY_LENGTH).toBe(3);
+  });
+
+  it('「仕組み」のヒントは、引き算で鍵が出ることと鍵の計算機を案内する', () => {
+    const body = vigenereStage.hints[1].body;
+    expect(body).toContain('暗号文 − 平文 = 鍵（26 で割った余り）');
+    expect(body).toContain('最初の単語の 1 文字目で引き算すれば ① の鍵が出る');
+    expect(body).toContain('鍵の計算機');
   });
 });
