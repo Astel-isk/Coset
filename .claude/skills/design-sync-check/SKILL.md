@@ -85,14 +85,15 @@ cat .github/workflows/ci.yml
 
 ### 6. 展示(簡易版)の制約
 
-CLAUDE.md「展示(簡易版)の制約」は会場ネットワークに依存しないことを求めている。
+CLAUDE.md「展示(簡易版)の制約」と EXHIBITION.md は、最初の読み込み以外でネットワークに依存しないこと、
+ビルドが単一の `dist/index.html` に収まることを求めている。
 
 ```bash
 grep -rn "https\?://" src index.html | grep -v "^\S*:.*// " || echo "外部参照なし"
 ```
 
 - 実行時に外部へ取りに行く参照(CDN の script/link、フォント、API)が入っていないか
-- `npm run build` → `npm run preview` でローカル完結する構成のままか(`vite.config.ts` の `base: './'` が維持されているか)
+- `npm run build` の出力が単一の `dist/index.html` に収まり、ダブルクリックでも動く構成のままか(`vite.config.ts` の `base: './'` と埋め込みの設定が維持されているか)
 
 ### 7. ドキュメント間の相互参照
 
