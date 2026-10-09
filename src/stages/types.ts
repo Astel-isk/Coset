@@ -36,6 +36,19 @@ export interface Hint {
 /** ヒントは 3 段そろっていること。段数の逸脱を型で止める */
 export type HintSet = readonly [Hint, Hint, Hint];
 
+/**
+ * 「もっと知る」の解説カード 1 枚（簡易版）。式は KaTeX を使わず文章で書く。
+ * figure は等幅で表示する行の配列（表や図）。なければ本文だけを出す。
+ */
+export interface NoteCard {
+  readonly title: string;
+  readonly body: string;
+  readonly figure?: readonly string[];
+}
+
+/** 解説カードは 4 枚そろっていること */
+export type NoteSet = readonly [NoteCard, NoteCard, NoteCard, NoteCard];
+
 /** 平文を比較するときの正規化規則（DESIGN.md §3 が実装時に定めるとしていたぶん） */
 export interface NormalizeRule {
   readonly ignoreCase: boolean;
@@ -92,6 +105,8 @@ export interface Stage {
   readonly hints: HintSet;
   readonly clear: ClearCondition;
   readonly debrief: Debrief;
+  /** クリア画面の「もっと知る」で開く解説カード */
+  readonly notes: NoteSet;
   /** 出題を作る。random は [0, 1) の一様乱数を返す関数（テストでは固定列を渡せる） */
   readonly generate: (random: () => number) => Puzzle;
 }

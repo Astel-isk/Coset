@@ -1,23 +1,23 @@
 import { useCallback, useState } from 'react';
-import type { Puzzle, Stage } from '../stages/types';
 import { ToolHost } from '../tools/ToolHost';
+import type { Game } from './game';
 import { fillHint, isCorrect } from './logic';
-import { RECORD_NO } from './record';
+import { paperHead } from './record';
 import { useIdleTimeout } from './useIdleTimeout';
 
 /** 解読画面で無操作が続いたら待機へ戻すまでの時間 */
 const IDLE_MS = 3 * 60 * 1000;
 
 interface PlayScreenProps {
-  readonly stage: Stage;
-  readonly puzzle: Puzzle;
+  readonly game: Game;
   /** 正解したとき。試した鍵の数と鍵の総数を渡す */
   readonly onSolved: (tried: number, total: number) => void;
   readonly onRestart: () => void;
 }
 
 /** 解読画面。ツール（時計盤）が返す候補平文を、「これで解読」で判定する */
-export function PlayScreen({ stage, puzzle, onSolved, onRestart }: PlayScreenProps) {
+export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
+  const { stage, puzzle, record } = game;
   const [candidate, setCandidate] = useState('');
   const [attempts, setAttempts] = useState({ tried: 0, total: 0 });
   const [openedHints, setOpenedHints] = useState(0);
@@ -45,7 +45,7 @@ export function PlayScreen({ stage, puzzle, onSolved, onRestart }: PlayScreenPro
     <main className="screen play">
       <header className="play-head">
         <p className="record">
-          傍受記録 {RECORD_NO} ・ {stage.title}
+          傍受記録 {record.no} ・ {stage.title}
         </p>
         <button type="button" className="secondary" onClick={onRestart}>
           最初から
@@ -59,6 +59,7 @@ export function PlayScreen({ stage, puzzle, onSolved, onRestart }: PlayScreenPro
           key={mount.id}
           mount={mount}
           ciphertext={puzzle.ciphertext}
+          heading={paperHead(record)}
           onCandidate={handleCandidate}
           onAttempts={handleAttempts}
         />

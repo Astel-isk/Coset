@@ -181,7 +181,17 @@
   `Hint` はカードの名前 `label`（「手がかり」「仕組み」「答え」）と本文 `body` を持つ
 - クリア画面の対比は `Stage.debrief`（`rivalName`・`rivalKeys`・`rivalDuration`・`closing`）に持たせる。
   解読した側の鍵の数は、ステージ名（`title`）と時計盤が返す総数（`total`）から画面が作る
-- 時計盤（`tools/`）は暗号文とずらし量から戻した文を作り、`onCandidate` でランナーへ渡す。
+- 「もっと知る」のカードは `Stage.notes`（`NoteCard` 4 枚の組 `NoteSet`）に持たせる。
+  `NoteCard` は見出し `title`・本文 `body`・任意の等幅の図 `figure`（表示する行の配列）を持つ。
+  ステージ 1 の文面は `stages/caesar.ts`、図（アルファベットと番号の対応表）は `alphabetTable()` が作る
+- 記録番号と傍受時刻はステージの出題（`Puzzle`）には持たせず、ランナーの `ui/record.ts` の `generateRecord(random)` が作る。
+  `ui/game.ts` の `Game`（ステージ・出題・傍受記録の組）を待機・演出・解読・クリアの全画面で使い回す。
+  待機画面の切れ端も演出の暗号文も、これから遊ぶ `Game` の出題のものを使う（待機に戻るたびに作り直す）
+- ステージは `stages/index.ts` の `exhibitionStages`（遊ぶ順の配列）で並べる。ランナーは先頭から始める
+- 傍受演出（`ui/InterceptScreen.tsx`）は暗号文・記録・見出しの状態表示（例「受信中」）を受け取るだけで、暗号方式を知らない。
+  打ち出しの間隔は `ui/intercept.ts` の `typingInterval(length)` が文字数から決める
+- 時計盤（`tools/`）には電文の紙の見出し（`heading`。傍受時刻を含む）をランナーから渡す。
+  暗号文とずらし量から戻した文を作り、`onCandidate` でランナーへ渡す。
   試した鍵の数も時計盤が数えてランナーへ渡す（クリア画面で使う）。時計盤は正解を知らない
 - 暗号化・復号は `core/ciphers/caesar.ts`（本人が実装）を使う。それができるまでは `src/stages/` 側の仮実装で代用し、
   差し替えは import 1 行で済むようにする。仮実装は `core` に置かない（`core` は本人の学習対象）

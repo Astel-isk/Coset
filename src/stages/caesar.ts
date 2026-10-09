@@ -1,8 +1,57 @@
+import { randomInt } from '../random';
 import { encrypt } from './caesarStub';
-import type { Puzzle, Stage } from './types';
+import type { NoteSet, Puzzle, Stage } from './types';
 
-/** 出題の候補。平文はローマ字（簡易版の暫定判断。EXHIBITION.md「出題」） */
-const MESSAGES: readonly { readonly plaintext: string; readonly translation: string }[] = [
+/**
+ * アルファベットと番号の対応表（カード 1 の図）。A〜M と N〜Z の 2 段に分け、文字の下に番号を置く。
+ * 1 セルは 3 文字幅の右寄せで、文字は番号の 1 の位に揃う。
+ */
+export function alphabetTable(): readonly string[] {
+  const cells = (from: number, to: number, f: (i: number) => string) =>
+    Array.from({ length: to - from }, (_, j) => f(from + j).padStart(3)).join('');
+  const letter = (i: number) => String.fromCharCode('A'.charCodeAt(0) + i);
+  return [
+    cells(0, 13, letter),
+    cells(0, 13, String),
+    '',
+    cells(13, 26, letter),
+    cells(13, 26, String),
+  ];
+}
+
+/** 「もっと知る」のカード 4 枚。文面は EXHIBITION.md「もっと知る」 */
+const NOTES: NoteSet = [
+  {
+    title: '文字を数に直す',
+    body:
+      'A=0, B=1, …, Z=25 と番号を付けると、シーザー暗号は「番号に鍵を足す」だけの計算になる。'
+      + 'Z を越えたら A に戻る。',
+    figure: alphabetTable(),
+  },
+  {
+    title: '時計の算数',
+    body:
+      '23 時の 5 時間後は 28 時ではなく 4 時。24 で割った余りだけを見る数え方を mod 24 と呼ぶ。'
+      + 'シーザー暗号は 26 文字の時計で、（番号 + 鍵）を 26 で割った余りが暗号文の文字になる。'
+      + '余りが同じ数をひとまとめにしたものを剰余類（英語で coset。このゲームの名前の由来）という。',
+  },
+  {
+    title: '歴史',
+    body:
+      'ローマの将軍カエサルは、文字を 3 つずらす暗号で手紙を書いたと伝えられている'
+      + '（スエトニウス『ローマ皇帝伝』）。この暗号の名前はそこから来ている。',
+  },
+  {
+    title: 'この先',
+    body:
+      '鍵の数を増やすと、総当たりはすぐに効かなくなる。そこで武器になるのが代数の道具だ。'
+      + '次のステージでは、鍵が 3 文字の暗号に挑む。',
+  },
+];
+
+
+/** 出題の候補（10 文）。平文はローマ字（簡易版の暫定判断。EXHIBITION.md「出題」「追加の内容」） */
+export const MESSAGES: readonly { readonly plaintext: string; readonly translation: string }[] = [
   {
     plaintext: 'ASHITA NO YORU HACHIJI NI KYUUKOUSHA NO URA DE MATSU',
     translation: '明日の夜八時に旧校舎の裏で待つ',
@@ -15,16 +64,39 @@ const MESSAGES: readonly { readonly plaintext: string; readonly translation: str
     plaintext: 'KONO TSUUSHIN WO YONDARA SUGU NI MOYASHITE KURE',
     translation: 'この通信を読んだらすぐに燃やしてくれ',
   },
+  {
+    plaintext: 'KAGI WA KOUTEI NO SAKURA NO KI NO SHITA NI UMETA',
+    translation: '鍵は校庭の桜の木の下に埋めた',
+  },
+  {
+    plaintext: 'TSUGI NO RENRAKU WA KINYOUBI NO HOUKAGO NI SURU',
+    translation: '次の連絡は金曜日の放課後にする',
+  },
+  {
+    plaintext: 'AIKOTOBA WA YAMA TO KAWA DA',
+    translation: '合言葉は山と川だ',
+  },
+  {
+    plaintext: 'KEIKAKU WA JUNCHOU DA SONO MAMA SUSUME',
+    translation: '計画は順調だ。そのまま進め',
+  },
+  {
+    plaintext: 'SHOKUDOU NO MADO GA AITARA AIZU DA',
+    translation: '食堂の窓が開いたら合図だ',
+  },
+  {
+    plaintext: 'TEKI NI KIZUKARETA BASHO WO KAERU',
+    translation: '敵に気づかれた。場所を変える',
+  },
+  {
+    plaintext: 'TACHIBANASAI NO HI NI SUBETE WO AKIRAKA NI SURU',
+    translation: '立花祭の日にすべてを明らかにする',
+  },
 ];
 
 /** 鍵の最小値と最大値。0 は暗号化しないことになるので除く */
 const KEY_MIN = 1;
 const KEY_MAX = 25;
-
-/** [0, n) の整数を一様に選ぶ。random が 1 に達しても範囲外に出さない */
-function randomInt(random: () => number, n: number): number {
-  return Math.min(n - 1, Math.floor(random() * n));
-}
 
 /**
  * ステージ 1: シーザー暗号。
@@ -62,6 +134,7 @@ export const caesarStage: Stage = {
     rivalDuration: '1 秒に 1 億通り試しても 約 1,300 億年',
     closing: 'だから暗号には、もっと賢い仕組み（代数）が要る',
   },
+  notes: NOTES,
   generate(random: () => number): Puzzle {
     const key = KEY_MIN + randomInt(random, KEY_MAX - KEY_MIN + 1);
     // 候補は 1 件以上あるので、undefined にはならない。noUncheckedIndexedAccess のため先頭で受ける

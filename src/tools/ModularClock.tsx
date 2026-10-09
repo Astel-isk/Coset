@@ -53,7 +53,7 @@ const INITIAL: State = { pos: 0, tried: new Set([0]) };
  * 正解を知らない。戻した文を候補としてランナーへ返すだけで、判定はしない。
  * 全鍵を自動で試す機能は持たない（DESIGN.md §4）。
  */
-export function ModularClock({ mount, ciphertext, onCandidate, onAttempts }: ToolProps<'modular-clock'>) {
+export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttempts }: ToolProps<'modular-clock'>) {
   const modulus = mount.modulus;
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const dialRef = useRef<HTMLDivElement>(null);
@@ -181,7 +181,7 @@ export function ModularClock({ mount, ciphertext, onCandidate, onAttempts }: Too
         </div>
       </section>
       <section className="tool-text paper" aria-label="暗号文と戻した文">
-        <p className="paper-head">電文 ・ 傍受 22:14 ・ 発信元 不明</p>
+        <p className="paper-head">{heading}</p>
         <div className="words">
           {pairs.map((pair, i) => (
             <div key={i} className="word">

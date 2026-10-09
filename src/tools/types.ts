@@ -30,6 +30,8 @@ type MountOf<K extends ToolId> = Extract<ToolMount, { id: K }>;
 export interface ToolProps<K extends ToolId> {
   readonly mount: MountOf<K>;
   readonly ciphertext: string;
+  /** 電文の紙に出す見出し（例: 電文 ・ 傍受 22:14 ・ 発信元 不明）。傍受時刻は出題ごとに変わるのでランナーから渡す */
+  readonly heading: string;
   /** プレイヤーの操作で候補平文が変わったときに呼ぶ */
   readonly onCandidate: (plaintext: string) => void;
   /**

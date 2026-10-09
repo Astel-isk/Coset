@@ -267,6 +267,56 @@ button.primary {
   color: var(--sub);
 }
 
+/* ---- 傍受演出 ---- */
+
+.intercept {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3vh;
+  cursor: pointer;
+}
+
+.intercept-head {
+  width: min(86vw, 1200px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.intercept-head .record {
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+
+.intercept-paper {
+  width: min(86vw, 1200px);
+  padding: 4vh 3vw;
+}
+
+.intercept-text {
+  font: 700 2rem/1.7 var(--mono);
+  letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+}
+
+/* 打ち出し前の文字。場所だけ確保して見えなくする */
+.intercept-rest {
+  visibility: hidden;
+}
+
+.intercept-status {
+  min-height: 2.4rem;
+  font: 700 1.6rem/1.5 var(--mono);
+  letter-spacing: 0.2em;
+}
+
+.intercept-skip {
+  color: var(--sub);
+  font-size: 0.9rem;
+}
+
 /* ---- 解読画面 ---- */
 
 .play {
@@ -570,10 +620,95 @@ button.primary {
   font-weight: 700;
 }
 
-.clear .primary {
+.clear-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
   margin-top: 3vh;
+}
+
+.clear-actions button {
   font-size: 1.2rem;
 }
+
+.stamp.stamped {
+  animation: none;
+}
+
+/* ---- 解説画面（もっと知る） ---- */
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+}
+
+.notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notes-title {
+  font-size: 1.8rem;
+  line-height: 1.3;
+}
+
+.notes-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 1.6vh 1.6vw;
+}
+
+.note {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-rows: auto;
+  align-content: start;
+  column-gap: 0.8rem;
+  padding: 1.6vh 1.4vw;
+  background: var(--plate);
+  border-radius: 6px;
+}
+
+.note-no {
+  grid-row: 1;
+  font: 700 1.6rem/1.4 var(--mono);
+  color: var(--sub);
+}
+
+.note-title {
+  grid-row: 1;
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.4;
+  color: var(--paper);
+}
+
+.note-body {
+  grid-column: 1 / -1;
+  margin-top: 0.6vh;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.note-figure {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 1vh 0 0;
+  padding: 0.5em 0.9em;
+  font: 700 1.1rem/1.4 var(--mono);
+  white-space: pre;
+  color: var(--paper-ink);
+  background: var(--paper);
+  border-radius: 3px;
+}
+
 
 /* ---- 動きを減らす設定 ---- */
 
