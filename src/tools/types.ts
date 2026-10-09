@@ -19,7 +19,12 @@ export type ToolMount =
    * 円盤を count 枚並べた時計盤（ヴィジュネル暗号。鍵が count 文字）。1 枚が 1 文字ぶんの鍵を受け持つ。
    * 各円盤は mod modulus。onAttempts の tried は 3 枚の合計、total は modulus × count
    */
-  | { readonly id: 'multi-clock'; readonly modulus: number; readonly count: number };
+  | { readonly id: 'multi-clock'; readonly modulus: number; readonly count: number }
+  /**
+   * アフィン表（アフィン暗号。円盤は使わない）。鍵は a と b の 2 つ。暗号文 = (a × 平文の番号 + b) を modulus で割った余り。
+   * onAttempts の tried は、来場者が止めた (a, b) の組のうち a が modulus と互いに素なものの数、total は 12 × modulus
+   */
+  | { readonly id: 'affine-table'; readonly modulus: number };
 
 export type ToolId = ToolMount['id'];
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { keyExpression, letterNumber, restoreSentence, subtractionText, subtractMod } from './formula';
+import { ALPHABET } from './clock';
+import { affineKeyExpression, keyExpression, letterNumber, restoreSentence, subtractionText, subtractMod } from './formula';
 
 describe('letterNumber', () => {
   it('A=0 … Z=25。A–Z でなければ -1', () => {
@@ -93,5 +94,48 @@ describe('restoreSentence', () => {
 
   it('A–Z でなければ空文字列', () => {
     expect(restoreSentence(',', 3)).toBe('');
+  });
+});
+
+describe('affineKeyExpression', () => {
+  it('仕様の例: B(1) と S(18)、a = 3 で b = 25（−53 を 26 で割った余り）', () => {
+    expect(affineKeyExpression('B', 'S', 3)).toEqual({
+      b: 25,
+      text: 'b = B(1) − 3 × S(18) = 1 − 54 = −53 → 26 で割った余り 25',
+    });
+  });
+
+  it('差が 0 以上ならそのまま答えで、余りの説明は付けない', () => {
+    expect(affineKeyExpression('F', 'A', 5)).toEqual({ b: 5, text: 'b = F(5) − 5 × A(0) = 5 − 0 = 5' });
+    expect(affineKeyExpression('K', 'B', 5)).toEqual({ b: 5, text: 'b = K(10) − 5 × B(1) = 10 − 5 = 5' });
+    expect(affineKeyExpression('Z', 'A', 3)).toEqual({ b: 25, text: 'b = Z(25) − 3 × A(0) = 25 − 0 = 25' });
+  });
+
+  it('差が 0 のとき b = 0', () => {
+    expect(affineKeyExpression('F', 'B', 5)).toEqual({ b: 0, text: 'b = F(5) − 5 × B(1) = 5 − 5 = 0' });
+  });
+
+  it('結果の b は、暗号化し直すと暗号文の文字に戻る（全組・全 a）', () => {
+    for (let a = 1; a <= 25; a++) {
+      for (let c = 0; c < 26; c++) {
+        for (let p = 0; p < 26; p++) {
+          const r = affineKeyExpression(ALPHABET[c] ?? '', ALPHABET[p] ?? '', a);
+          expect(r).not.toBeNull();
+          expect(r?.b).toBeGreaterThanOrEqual(0);
+          expect(r?.b).toBeLessThan(26);
+          expect(((a * p + (r?.b ?? 0)) % 26)).toBe(c);
+        }
+      }
+    }
+  });
+
+  it('a が 26 と互いに素でなくても計算する', () => {
+    expect(affineKeyExpression('B', 'C', 2)).toEqual({ b: 23, text: 'b = B(1) − 2 × C(2) = 1 − 4 = −3 → 26 で割った余り 23' });
+  });
+
+  it('A–Z でない文字は null', () => {
+    expect(affineKeyExpression('b', 'S', 3)).toBeNull();
+    expect(affineKeyExpression('B', ' ', 3)).toBeNull();
+    expect(affineKeyExpression('B', '', 3)).toBeNull();
   });
 });

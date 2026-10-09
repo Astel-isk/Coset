@@ -31,8 +31,8 @@
 簡易版（立花祭 2026 展示、[EXHIBITION.md](EXHIBITION.md)）を `https://coset.astelisk.com`（Cloudflare Workers の静的アセット）で公開している。
 `dist/index.html` 単体でもダブルクリックで開ける。
 
-- 待機 → 傍受演出 → 解読 → クリア（→ もっと知る）の流れで、ステージ 1（シーザー暗号）とステージ 2（ヴィジュネル暗号、円盤 3 枚）を遊べる
-- 暗号化・復号は `src/stages/caesarStub.ts`・`src/stages/vigenereStub.ts` の仮実装で代用しており、`src/core/ciphers/` の実装後に差し替える
+- 待機 → 傍受演出 → 解読 → クリア（→ もっと知る）の流れで、ステージ 1（シーザー暗号）・ステージ 2（ヴィジュネル暗号、円盤 3 枚と鍵の計算機）・ステージ 3（アフィン暗号、a・b の選択と計算機）を遊べる
+- 暗号化・復号は `src/stages/caesarStub.ts`・`vigenereStub.ts`・`affineStub.ts` の仮実装で代用しており、`src/core/` の実装後に差し替える
 - 本編（DESIGN.md のロードマップ）は未着手
 
 ## 開発

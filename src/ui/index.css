@@ -3,7 +3,8 @@
  * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
  * システムフォントのみ使い、外部リソースは参照しない。
  * 色の約束: 朱（--accent）は 主ボタン・円盤の読み取り窓・判子・円盤の現在の鍵の目盛り・開いたヒントのカード名・
- * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ文字 にだけ使う。
+ * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ文字・
+ * アフィン暗号の選択中の a と、戻せない a で重なった列の枠 にだけ使う。
  * 平面的に描く（グラデーション・影・発光を使わない）。
  */
 :root {
@@ -1003,6 +1004,247 @@ button:disabled:hover {
   color: #fff;
   background: var(--accent);
   border-radius: 3px;
+}
+
+/* ---- 解読画面（アフィン表のツール） ----
+ * 円盤を使わないので、上段に 与件・不正解の表示・「これで解読」、その下に 鍵の選択と鍵の計算機を並べ、
+ * 続けて 対応表・電文の紙・ヒントを全幅で積む。方式ごとの分岐ではなく、ツールの ID（data-tool）で配置を切り替える。 */
+
+.play[data-tool='affine-table'] {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 9rem;
+  grid-template-rows: repeat(6, auto);
+  grid-template-areas:
+    'rec flv rst'
+    'givens fb act'
+    'ctl calc calc'
+    'map map map'
+    'paper paper paper'
+    'hints hints hints';
+  column-gap: 1.2rem;
+  align-content: start;
+}
+
+.play[data-tool='affine-table'] .play-head {
+  display: contents;
+}
+
+.play[data-tool='affine-table'] .play-head .record {
+  grid-area: rec;
+  align-self: center;
+}
+
+.play[data-tool='affine-table'] .play-head button {
+  grid-area: rst;
+  justify-self: end;
+}
+
+.play[data-tool='affine-table'] .flavor {
+  grid-area: flv;
+  align-self: center;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.play[data-tool='affine-table'] .givens {
+  grid-area: givens;
+  align-self: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.1rem 1.4rem;
+}
+
+.play[data-tool='affine-table'] .play-actions {
+  display: contents;
+}
+
+.play[data-tool='affine-table'] .play-actions button {
+  grid-area: act;
+}
+
+.play[data-tool='affine-table'] .feedback {
+  grid-area: fb;
+  align-self: center;
+  min-height: 1.4em;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.play[data-tool='affine-table'] .key-calc {
+  grid-area: calc;
+}
+
+.play[data-tool='affine-table'] .mapping {
+  grid-area: map;
+  justify-self: start;
+}
+
+.play[data-tool='affine-table'] .mapping-grid {
+  --map-col: 2rem;
+}
+
+.play[data-tool='affine-table'] .tool-text {
+  grid-area: paper;
+  padding: 1vh 1.2vw 1.2vh;
+}
+
+.play[data-tool='affine-table'] .hints {
+  grid-area: hints;
+}
+
+.play[data-tool='affine-table'] .hint {
+  min-height: 0;
+  padding: 0.4em 0.8em;
+}
+
+/* 鍵の選択: a を 1〜25 のボタンから選び、b を ← → で動かす。今の a・b は大きく出す */
+.affine-ctl {
+  grid-area: ctl;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.3rem 0.8rem 0.45rem;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+}
+
+.affine-ctl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.affine-ctl .attempts {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.affine-ctl .attempts strong {
+  font-size: 1.3rem;
+}
+
+.affine-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.affine-label {
+  flex: none;
+  width: 1rem;
+  font: 700 1.2rem/1 var(--mono);
+  color: var(--sub);
+}
+
+.affine-a-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+button.a-btn {
+  min-height: 1.9rem;
+  min-width: 1.8rem;
+  padding: 0 0.1rem;
+  font: 700 1rem/1 var(--mono);
+  border-width: 2px;
+  border-radius: 4px;
+}
+
+/* 選んでいる a は朱で示す（どの a が使えるかは示さない。それは対応表の重なりで確かめる） */
+button.a-btn.sel {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+button.b-btn {
+  min-height: 2.3rem;
+  min-width: 3.4rem;
+  padding: 0;
+  font-size: 1.2rem;
+}
+
+.affine-key {
+  display: flex;
+  gap: 1.4rem;
+  margin-left: 0.8rem;
+  font: 700 1.9rem/1.1 var(--mono);
+  color: var(--sub);
+  white-space: nowrap;
+}
+
+.affine-key strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 鍵の計算機（アフィン）: 式は長いので少し小さく。注意はボタンの右に置き、行を増やさない */
+.affine-calc .calc-expression {
+  font-size: 0.9rem;
+}
+
+.affine-calc .calc-buttons {
+  align-items: center;
+}
+
+.calc-caution {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+/* 対応表（アフィン）: 上の行が平文（強い色）、下の行が暗号文（弱い色）。重なった列は朱の枠で囲む */
+.map-cell.aff-plain.used {
+  color: var(--paper);
+}
+
+.map-cell.aff-cipher.used {
+  color: var(--sub);
+}
+
+.map-cell.aff-plain.hl,
+.map-cell.aff-cipher.hl {
+  color: #fff;
+}
+
+.map-cell.clash {
+  border-left-color: var(--accent);
+  border-right-color: var(--accent);
+}
+
+.aff-plain.clash {
+  border-top-color: var(--accent);
+}
+
+.aff-cipher.clash {
+  border-bottom-color: var(--accent);
+}
+
+.affine-warn {
+  min-height: 1.5em;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.affine-warn-eg {
+  font-weight: 400;
+  color: var(--sub);
+}
+
+.affine-formula {
+  margin-left: 1.2rem;
+}
+
+/* 戻し先が 1 つに決まらない文字（?）は薄く */
+.word-restored .cell.unknown {
+  color: var(--paper-faint);
 }
 
 /* ---- クリア画面 ---- */

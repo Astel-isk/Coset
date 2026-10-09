@@ -85,3 +85,33 @@ export function restoreSentence(letter: string, k: number, modulus = 26, dialLab
     ? `暗号文の ${letter}(${c}) は ${calc} で ${plain} に戻る`
     : `暗号文の ${letter}(${c}) は ${dialLabel} の鍵 ${k} で ${calc}、${plain} に戻る`;
 }
+
+/** アフィン暗号の鍵の計算機の結果。b は 0 以上 modulus 未満、text は画面に出す式 */
+export interface AffineKeyExpression {
+  readonly b: number;
+  readonly text: string;
+}
+
+/**
+ * アフィン暗号で、暗号文の文字・平文の文字・今の a から b を出す（暗号文 = a × 平文 + b より b = 暗号文 − a × 平文）。
+ * 例: 「b = B(1) − 3 × S(18) = 1 − 54 = −53 → 26 で割った余り 25」。
+ * 差が 0 以上ならそのまま答えなので、「→ 26 で割った余り」は付けない（「b = F(5) − 3 × A(0) = 5 − 0 = 5」）。
+ * a が 26 と互いに素でなくても計算はする（どの文字を組にするかも a の良し悪しも判断しない）。A–Z でない文字があれば null。
+ */
+export function affineKeyExpression(
+  cipherLetter: string,
+  plainLetter: string,
+  a: number,
+  modulus = 26,
+): AffineKeyExpression | null {
+  const c = letterNumber(cipherLetter, modulus);
+  const p = letterNumber(plainLetter, modulus);
+  if (c < 0 || p < 0) return null;
+  const product = a * p;
+  const diff = c - product;
+  const b = mod(diff, modulus);
+  const head = `b = ${cipherLetter}(${c}) − ${a} × ${plainLetter}(${p}) = ${c} − ${product} = ${signed(diff)}`;
+  // c は modulus 未満・a × p は 0 以上なので、差は modulus を超えない。余りの説明が要るのは負のときだけ
+  const reduced = diff < 0;
+  return { b, text: reduced ? `${head} → ${modulus} で割った余り ${b}` : head };
+}

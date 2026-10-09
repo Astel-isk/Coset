@@ -97,6 +97,7 @@ export const vigenereStage: Stage = {
   id: 'vigenere',
   order: 2,
   title: 'ヴィジュネル暗号',
+  arrival: { challengeLabel: '次の暗号に挑む', interceptHeadline: '新たな電文を傍受' },
   flavor: '新たに傍受した電文。鍵が 3 文字に増えた。円盤は 3 枚。1 枚ずつ合わせて、読める文を探せ。',
   briefing:
     'この暗号は、文字ごとに違う量をずらす方式。鍵は 3 文字で、1・4・7…文字目は 1 枚目、'

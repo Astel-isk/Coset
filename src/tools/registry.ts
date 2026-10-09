@@ -1,3 +1,4 @@
+import { AffineTable } from './AffineTable';
 import { ModularClock } from './ModularClock';
 import { MultiClock } from './MultiClock';
 import type { ToolRegistry } from './types';
@@ -6,4 +7,5 @@ import type { ToolRegistry } from './types';
 export const toolRegistry: ToolRegistry = {
   'modular-clock': ModularClock,
   'multi-clock': MultiClock,
+  'affine-table': AffineTable,
 };

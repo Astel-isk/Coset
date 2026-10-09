@@ -12,9 +12,9 @@ interface ClearScreenProps {
   readonly total: number;
   /** 「もっと知る」から戻ってきたか。戻ったときは判子を押し直さない */
   readonly revisited: boolean;
-  /** 次のステージがあるか。あれば「次の暗号に挑む」を主ボタンにし、「次の人へ」は副ボタンになる */
-  readonly hasNext: boolean;
-  /** 「次の暗号に挑む」。次のステージの傍受演出へ進む */
+  /** 次のステージへ進む主ボタンの文言（例: 次の暗号に挑む、最後の暗号に挑む）。次のステージがなければ undefined で、「次の人へ」が主ボタンになる */
+  readonly nextLabel?: string;
+  /** 次のステージへ進む主ボタン。次のステージの傍受演出へ進む */
   readonly onNext: () => void;
   /** 「もっと知る」を開く */
   readonly onMore: () => void;
@@ -22,7 +22,7 @@ interface ClearScreenProps {
 }
 
 /** クリア画面。左に解読した電文（判子つき）、右に試した鍵の数と強い暗号との対比を見せる */
-export function ClearScreen({ game, tried, total, revisited, hasNext, onNext, onMore, onRestart }: ClearScreenProps) {
+export function ClearScreen({ game, tried, total, revisited, nextLabel, onNext, onMore, onRestart }: ClearScreenProps) {
   useIdleTimeout(IDLE_MS, onRestart);
   const { stage, puzzle, record } = game;
   const { debrief } = stage;
@@ -56,10 +56,10 @@ export function ClearScreen({ game, tried, total, revisited, hasNext, onNext, on
         </dl>
         <p className="closing">{debrief.closing}</p>
         <div className="clear-actions">
-          {hasNext ? (
+          {nextLabel !== undefined ? (
             <>
               <button type="button" className="primary" onClick={onNext}>
-                次の暗号に挑む
+                {nextLabel}
               </button>
               <button type="button" className="secondary" onClick={onRestart}>
                 次の人へ

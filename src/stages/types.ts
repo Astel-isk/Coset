@@ -12,7 +12,7 @@ import type { ToolMount } from '../tools/types';
  */
 
 /** ステージの識別子。ステージを追加するときはここに足す */
-export type StageId = 'caesar' | 'vigenere';
+export type StageId = 'caesar' | 'vigenere' | 'affine';
 
 /**
  * 与件として提示する手がかり（DESIGN.md §2 の「解読の手がかり」列）。
@@ -105,7 +105,7 @@ export interface DebriefRow {
 
 /**
  * クリア画面の「n 通りで破った」と対比（簡易版）。
- * 文中の `{total}` は、時計盤が返す鍵の総数（ステージ 1 は 26、ステージ 2 は 78）に画面が置き換える。
+ * 文中の `{total}` は、ツールが返す鍵の総数（ステージ 1 は 26、ステージ 2 は 78、ステージ 3 は 312）に画面が置き換える。
  */
 export interface Debrief {
   /** 大きな数字（試した鍵の数 n）の上に出す文（例: `{total} 通りのうち`、`あなたが試した鍵`） */
@@ -118,12 +118,25 @@ export interface Debrief {
   readonly closing: string;
 }
 
+/**
+ * 前のステージのクリア画面から、このステージへ進むときの文言（簡易版）。
+ * ランナーが方式やステージの順を知らなくても、「最後の暗号」のような言い回しをデータで変えられるようにする。
+ */
+export interface Arrival {
+  /** 前のステージのクリア画面の主ボタン（例: 次の暗号に挑む、最後の暗号に挑む） */
+  readonly challengeLabel: string;
+  /** 傍受演出の見出しの状態表示（例: 新たな電文を傍受、最後の電文を傍受） */
+  readonly interceptHeadline: string;
+}
+
 export interface Stage {
   readonly id: StageId;
   /** 表示順。DESIGN.md §2 の表の番号に合わせる */
   readonly order: number;
   /** ステージ名（日本語） */
   readonly title: string;
+  /** このステージへ進むときの文言。最初のステージは前がないので持たない。なければランナーの既定の文言を使う */
+  readonly arrival?: Arrival;
   /** 短い世界観フレーバー（日本語） */
   readonly flavor: string;
   /** 導入解説（日本語）。そのステージで何に気づかせるか */
