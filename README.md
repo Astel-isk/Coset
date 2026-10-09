@@ -23,7 +23,7 @@
 ## ドキュメント
 
 - [DESIGN.md](DESIGN.md) — ゲーム設計・コンテンツ・技術構成の詳細
-- [CLAUDE.md](CLAUDE.md) — 開発の分担・規約・簡易版の制約
+- [AGENTS.md](AGENTS.md) — 不変条件・開発の分担・Git 運用（CLAUDE.md はここへのポインタ）
 - [EXHIBITION.md](EXHIBITION.md) — 簡易版（立花祭 2026 展示）の仕様
 
 ## ステータス

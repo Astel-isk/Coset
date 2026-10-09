@@ -1,11 +1,11 @@
 ---
 name: design-sync-check
-description: Check whether DESIGN.md, CLAUDE.md, README.md and src/core/README.md still match the actual Coset implementation (module layout, core API shape, banned UI affordances, verify/CI commands, cross-doc links). Use when asked to verify the docs are up to date, check docs against the implementation, or before a docs-related commit/PR in this repo.
+description: Check whether DESIGN.md, EXHIBITION.md, AGENTS.md, README.md and src/core/README.md still match the actual Coset implementation (module layout, core API shape, banned UI affordances, verify/CI commands, cross-doc links). Use when asked to verify the docs are up to date, check docs against the implementation, or before a docs-related commit/PR in this repo.
 ---
 
 # design-sync-check
 
-Coset の `DESIGN.md` / `CLAUDE.md` / `README.md` / `src/core/README.md` が実装と食い違っていないかを確認するチェックリスト。
+Coset の `DESIGN.md` / `EXHIBITION.md` / `AGENTS.md` / `README.md` / `src/core/README.md` が実装と食い違っていないかを確認するチェックリスト。
 
 このリポジトリは **DESIGN.md が正**、簡易版の暫定判断は DESIGN.md を上書きしないという建て付けで動いている。
 実装が先に進んで文書が追いつかないと、この「どちらが正か」が壊れて設計判断の履歴が読めなくなる。それを防ぐための点検。
@@ -44,7 +44,7 @@ grep -rn "export " src/core --include=*.ts | grep -v ".test.ts"
 grep -rn "from '\(react\|\.\./ui\|\.\./\.\./ui\)" src/core || echo "UI依存なし"
 ```
 
-### 3. 設計上の禁止事項(DESIGN.md §4 / CLAUDE.md)
+### 3. 設計上の禁止事項(DESIGN.md §4 / AGENTS.md「不変条件」)
 
 機械的に見えるのは次の3点。**該当があれば最優先で報告する。**
 
@@ -59,7 +59,7 @@ grep -rn "attack" src/ui src/tools src/stages 2>/dev/null || echo "UIからのat
 
 ### 4. 簡易版の暫定判断と DESIGN.md の分離
 
-CLAUDE.md は「簡易版のために置く暫定判断(永続化しない・ヒントに代償を設けない・KaTeX / Zustand を入れない等)は
+AGENTS.md「不変条件」は「簡易版のために置く暫定判断(永続化しない・ヒントに代償を設けない・KaTeX / Zustand を入れない等)は
 DESIGN.md の決定を上書きしない」と定めている。**逆向きのズレ**を探す。
 
 ```bash
@@ -67,7 +67,7 @@ grep -n "\"\(katex\|zustand\)\"" package.json || echo "KaTeX/Zustand は未導�
 grep -rn "localStorage\|sessionStorage" src || echo "永続化なし"
 ```
 
-- 依存が入っているのに CLAUDE.md の暫定判断の記述が古いままになっていないか
+- 依存が入っているのに AGENTS.md の暫定判断の記述が古いままになっていないか
 - 永続化のコードが入っているのに「進行状況を保存しない」という展示の制約が残ったままになっていないか
 - 逆に、DESIGN.md §8「未決事項」の論点が実装では既に確定しているのに、表に未決として残っていないか
   (特に「ステージ定義の形式」「ステージ構成の範囲」— 第1マイルストーンで結論を出すと明記されている)
@@ -79,13 +79,13 @@ grep -n "\"scripts\"" -A 12 package.json
 cat .github/workflows/ci.yml
 ```
 
-- `package.json` の scripts、`CLAUDE.md`「検証」節、`README.md`「開発」節、CI のステップが同じコマンドを指しているか
-- `npm run verify` の中身(typecheck → lint → test)が CLAUDE.md の記述と一致しているか
+- `package.json` の scripts、`AGENTS.md`「ランタイムと起動コマンド」節、`README.md`「開発」節、CI のステップが同じコマンドを指しているか
+- `npm run verify` の中身(typecheck → lint → test)が AGENTS.md の記述と一致しているか
 - CI にあって手元に無いステップ(または逆)がないか
 
 ### 6. 展示(簡易版)の制約
 
-CLAUDE.md「展示(簡易版)の制約」と EXHIBITION.md は、最初の読み込み以外でネットワークに依存しないこと、
+AGENTS.md「不変条件」の展示の項と EXHIBITION.md は、最初の読み込み以外でネットワークに依存しないこと、
 ビルドが単一の `dist/index.html` に収まることを求めている。
 
 ```bash

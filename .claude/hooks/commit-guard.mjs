@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-// git commit を実行する直前に、CLAUDE.md の規約に反していないかを機械的に検査する。
+// git commit を実行する直前に、AGENTS.md「Git 運用」の規約に反していないかを機械的に検査する。
 //
 // 検査するのは2つだけ。
-//   1. コミットメッセージの接頭辞が `種別: 要約`(docs/feat/fix/chore/test/refactor)であること → 違反は deny
-//   2. src/core/ の実装を触るコミットに、同じコミット内のテストが含まれること      → 欠けていれば ask
+//   1. コミットメッセージが `接頭辞:やったこと`(コロンの後に空白なし)であること → 違反は deny
+//   2. src/core/ の実装を触るコミットに、同じコミット内のテストが含まれること → 欠けていれば ask
 //
-// 規約そのものは CLAUDE.md が正。種別を増やす・減らすときは CLAUDE.md と TYPES を両方直す。
+// 規約そのものは AGENTS.md が正。接頭辞を増やす・減らすときは AGENTS.md と TYPES を両方直す。
 // 判断に迷う入力(メッセージを取り出せない・git が読めない等)では黙って通す。
 // 検査を落とすより、誤って止めるほうが害が大きいため。
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-const TYPES = ['docs', 'feat', 'fix', 'chore', 'test', 'refactor'];
-// TYPES と同じ並び。片方だけ直すとずれるので、種別を増減するときは両方を直す。
-const PREFIX_RE = /^(docs|feat|fix|chore|test|refactor)(\([^)]+\))?:/;
+const TYPES = ['feat', 'ui', 'remove', 'fix', 'docs', 'style', 'refact', 'perf', 'test', 'wip', 'chore'];
+// 接頭辞・コロン・本文の順で、コロンの直後に空白を置かない
+const PREFIX_RE = new RegExp(`^(${TYPES.join('|')}):\\S`);
 
 /** PreToolUse の判定を JSON で返して終了する。 */
 function decide(permissionDecision, permissionDecisionReason) {
@@ -111,10 +111,10 @@ function main() {
     if (!exempt && !PREFIX_RE.test(head)) {
       decide(
         'deny',
-        `コミットメッセージが CLAUDE.md の規約(\`種別: 要約\`)に合っていない。\n` +
+        `コミットメッセージが AGENTS.md の規約(\`接頭辞:やったこと\`、コロンの後に空白なし)に合っていない。\n` +
           `  入力: ${head}\n` +
-          `  使える種別: ${TYPES.join(' / ')}(\`feat(core): ...\` のようにスコープを付けてもよい)\n` +
-          `メッセージを直して commit し直すこと。種別そのものを増やしたい場合は先に CLAUDE.md の規約を更新する。`,
+          `  使える接頭辞: ${TYPES.join(' / ')}(例: \`feat:剰余演算を実装\`)\n` +
+          `メッセージを直して commit し直すこと。接頭辞そのものを増やしたい場合は先に AGENTS.md の規約を更新する。`,
       );
     }
   }
@@ -136,7 +136,7 @@ function main() {
       'ask',
       `src/core/ の実装を変更しているが、このコミットにテストが1つも入っていない。\n` +
         `  対象: ${coreImpl.join(', ')}\n` +
-        `CLAUDE.md は core について「テストを同じコミットに必ず含める」と定めている。` +
+        `AGENTS.md は core について「テストを同じコミットに必ず含める」と定めている。` +
         `テストを追加してから commit し直すか、含めない理由があるならこのまま進める。`,
     );
   }
