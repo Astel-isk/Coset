@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NormalizeRule } from '../stages/types';
-import { fillHint, isCorrect, normalizeText } from './logic';
+import { fillPlaceholders, isCorrect, normalizeText } from './logic';
 
 const RULE: NormalizeRule = { ignoreCase: true, ignoreWhitespace: true, ignorePunctuation: true };
 
@@ -33,16 +33,30 @@ describe('isCorrect', () => {
   });
 });
 
-describe('fillHint', () => {
-  it('{key} をすべて鍵の表記に置き換える', () => {
-    expect(fillHint('鍵は {key}。円盤を {key} に合わせる', '17')).toBe('鍵は 17。円盤を 17 に合わせる');
+describe('fillPlaceholders', () => {
+  it('{名前} をすべて、同じ名前の値に置き換える', () => {
+    expect(fillPlaceholders('鍵は {key}。円盤を {key} に合わせる', { key: '17' })).toBe(
+      '鍵は 17。円盤を 17 に合わせる',
+    );
   });
 
-  it('{key} が無い本文はそのまま', () => {
-    expect(fillHint('鍵の候補は何通りある?', '17')).toBe('鍵の候補は何通りある?');
+  it('複数の名前を一度に置き換える', () => {
+    expect(fillPlaceholders('①={k1}、②={k2}、③={k3}', { k1: '3', k2: '17', k3: '9' })).toBe('①=3、②=17、③=9');
   });
 
-  it('鍵の表記に $ が含まれても文字どおりに入る', () => {
-    expect(fillHint('{key}', '$&')).toBe('$&');
+  it('{名前} が無い本文はそのまま', () => {
+    expect(fillPlaceholders('鍵の候補は何通りある?', { key: '17' })).toBe('鍵の候補は何通りある?');
+  });
+
+  it('値に $ が含まれても文字どおりに入る', () => {
+    expect(fillPlaceholders('{key}', { key: '$&' })).toBe('$&');
+  });
+
+  it('値に無い名前はそのまま残す', () => {
+    expect(fillPlaceholders('{key} と {other}', { key: '1' })).toBe('1 と {other}');
+  });
+
+  it('クリア画面の総数も同じ仕組みで入る', () => {
+    expect(fillPlaceholders('分ければ {total} 通りのうち', { total: '78' })).toBe('分ければ 78 通りのうち');
   });
 });

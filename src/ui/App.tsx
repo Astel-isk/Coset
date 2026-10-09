@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { exhibitionStages } from '../stages';
+import type { Stage } from '../stages/types';
 import { ClearScreen } from './ClearScreen';
 import { newGame } from './game';
 import type { Game } from './game';
@@ -17,21 +18,28 @@ interface ClearData {
 
 type Phase =
   | { readonly kind: 'idle'; readonly game: Game }
-  | { readonly kind: 'intercept'; readonly game: Game; readonly gameId: number }
+  | { readonly kind: 'intercept'; readonly game: Game; readonly gameId: number; readonly headline: string }
   | { readonly kind: 'play'; readonly game: Game; readonly gameId: number }
   | ({ readonly kind: 'clear'; readonly revisited: boolean } & ClearData)
   | ({ readonly kind: 'notes' } & ClearData);
 
-/** 傍受演出の見出し（状態表示）。ステージ 2 の前は「新たな電文を傍受」にする予定 */
+/** 傍受演出の見出し（状態表示）。待機からの最初の演出は「受信中」、次のステージの前は「新たな電文を傍受」 */
 const INTERCEPT_HEADLINE = '受信中';
+const NEXT_INTERCEPT_HEADLINE = '新たな電文を傍受';
 
 /** 最初のステージの新しいゲーム。待機画面はこの出題の暗号文を切れ端として見せる */
 function firstGame(): Game {
   return newGame(exhibitionStages[0], Math.random);
 }
 
+/** 次のステージ。最後のステージなら undefined */
+function nextStageOf(stage: Stage): Stage | undefined {
+  return exhibitionStages[exhibitionStages.indexOf(stage) + 1];
+}
+
 /**
  * ランナー。待機 → 傍受演出 → 解読 → クリア（⇄ もっと知る）→ 待機 を切り替える。
+ * クリア後に次のステージがあれば、「次の暗号に挑む」で傍受演出 → 次のステージの解読へ進む。
  * 暗号方式は知らない。出題は stage.generate、操作は stage.tools が持つ。
  * 進行状況はどこにも保存しない（EXHIBITION.md）。
  */
@@ -49,7 +57,12 @@ export function App() {
           game={phase.game}
           onStart={() => {
             lastGameId.current += 1;
-            setPhase({ kind: 'intercept', game: phase.game, gameId: lastGameId.current });
+            setPhase({
+              kind: 'intercept',
+              game: phase.game,
+              gameId: lastGameId.current,
+              headline: INTERCEPT_HEADLINE,
+            });
           }}
         />
       );
@@ -59,7 +72,7 @@ export function App() {
           key={phase.gameId}
           record={phase.game.record}
           ciphertext={phase.game.puzzle.ciphertext}
-          headline={INTERCEPT_HEADLINE}
+          headline={phase.headline}
           onDone={() => setPhase({ kind: 'play', game: phase.game, gameId: phase.gameId })}
         />
       );
@@ -75,17 +88,31 @@ export function App() {
           onRestart={restart}
         />
       );
-    case 'clear':
+    case 'clear': {
+      const next = nextStageOf(phase.game.stage);
       return (
         <ClearScreen
           game={phase.game}
           tried={phase.tried}
           total={phase.total}
           revisited={phase.revisited}
+          hasNext={next !== undefined}
+          onNext={() => {
+            if (!next) return;
+            // 次のステージは新しい出題・記録番号・傍受時刻で始める
+            lastGameId.current += 1;
+            setPhase({
+              kind: 'intercept',
+              game: newGame(next, Math.random),
+              gameId: lastGameId.current,
+              headline: NEXT_INTERCEPT_HEADLINE,
+            });
+          }}
           onMore={() => setPhase({ kind: 'notes', game: phase.game, tried: phase.tried, total: phase.total })}
           onRestart={restart}
         />
       );
+    }
     case 'notes':
       return (
         <NotesScreen

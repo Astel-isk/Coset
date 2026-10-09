@@ -17,6 +17,11 @@ interface DialProps {
   readonly marks?: DialMarks;
   /** 真上に読み取り窓（外周の先頭の文字と、その内側の内周の文字を囲む枠）を出すか */
   readonly showWindow?: boolean;
+  /**
+   * この円盤が操作対象か（複数枚並べるとき）。false なら読み取り窓を灰にし、今の鍵の目盛りも朱にしない。
+   * 1 枚だけのときは省く（常に操作対象）
+   */
+  readonly active?: boolean;
   /** 円盤の中央に重ねる SVG 要素 */
   readonly children?: ReactNode;
 }
@@ -37,7 +42,7 @@ const VIEW = 126;
  * 内周を k 目盛り回すと、外周の文字 X の内側に X−k の文字が来る。
  * 外周の外の目盛りのうち、鍵 k の目盛りは外周の文字 A+k（添字 k の文字）と同じ向きに置く。
  */
-export function Dial({ labels, steps, marks, showWindow = false, children }: DialProps) {
+export function Dial({ labels, steps, marks, showWindow = false, active = true, children }: DialProps) {
   const n = labels.length;
   const stepDeg = 360 / n;
   return (
@@ -49,7 +54,8 @@ export function Dial({ labels, steps, marks, showWindow = false, children }: Dia
     >
       <circle className="dial-disc" r={DISC_R} />
       {labels.map((label, i) => {
-        const state = marks ? (i === marks.current ? ' current' : marks.tried.has(i) ? ' tried' : '') : '';
+        const currentClass = active ? ' current' : ' current off';
+        const state = marks ? (i === marks.current ? currentClass : marks.tried.has(i) ? ' tried' : '') : '';
         return (
           <line
             key={label}
@@ -88,7 +94,7 @@ export function Dial({ labels, steps, marks, showWindow = false, children }: Dia
       </g>
       <circle className="dial-hub" r={HUB_R} />
       {children}
-      {showWindow && <rect className="dial-window" x={-11} y={-104} width={22} height={48} rx={5} />}
+      {showWindow && <rect className={active ? 'dial-window' : 'dial-window off'} x={-11} y={-104} width={22} height={48} rx={5} />}
     </svg>
   );
 }

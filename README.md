@@ -28,10 +28,12 @@
 
 ## ステータス
 
-簡易版（立花祭 2026 展示、[EXHIBITION.md](EXHIBITION.md)）の画面を実装済み。ステージ 1（シーザー暗号＋モジュラー時計盤）を、待機 → 解読 → クリアの 3 画面で遊べる。
-シーザー暗号の暗号化・復号は `src/stages/caesarStub.ts` の仮実装で代用しており、`src/core/ciphers/caesar.ts` の実装後に差し替える。
-`https://coset.astelisk.com`（Cloudflare Workers の静的アセット）で配信する予定で、`dist/index.html` 単体でもダブルクリックで開ける。
-本編（ステージ 2 以降）は未着手。
+簡易版（立花祭 2026 展示、[EXHIBITION.md](EXHIBITION.md)）を `https://coset.astelisk.com`（Cloudflare Workers の静的アセット）で公開している。
+`dist/index.html` 単体でもダブルクリックで開ける。
+
+- 待機 → 傍受演出 → 解読 → クリア（→ もっと知る）の流れで、ステージ 1（シーザー暗号）とステージ 2（ヴィジュネル暗号、円盤 3 枚）を遊べる
+- 暗号化・復号は `src/stages/caesarStub.ts`・`src/stages/vigenereStub.ts` の仮実装で代用しており、`src/core/ciphers/` の実装後に差し替える
+- 本編（DESIGN.md のロードマップ）は未着手
 
 ## 開発
 

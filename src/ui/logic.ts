@@ -14,7 +14,10 @@ export function isCorrect(candidate: string, plaintext: string, rule: NormalizeR
   return normalizeText(candidate, rule) === normalizeText(plaintext, rule);
 }
 
-/** ヒント本文の `{key}` を、その回の鍵の表記に置き換える */
-export function fillHint(body: string, keyLabel: string): string {
-  return body.split('{key}').join(keyLabel);
+/**
+ * 本文の `{名前}` を、values の同じ名前の値に置き換える（ヒントの鍵、クリア画面の総数）。
+ * values に無い名前の `{...}` はそのまま残す。
+ */
+export function fillPlaceholders(body: string, values: Readonly<Record<string, string>>): string {
+  return body.replace(/\{(\w+)\}/g, (whole, name: string) => values[name] ?? whole);
 }

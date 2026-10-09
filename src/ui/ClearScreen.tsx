@@ -1,4 +1,5 @@
 import type { Game } from './game';
+import { fillPlaceholders } from './logic';
 import { paperHead } from './record';
 import { useIdleTimeout } from './useIdleTimeout';
 
@@ -11,16 +12,21 @@ interface ClearScreenProps {
   readonly total: number;
   /** 「もっと知る」から戻ってきたか。戻ったときは判子を押し直さない */
   readonly revisited: boolean;
+  /** 次のステージがあるか。あれば「次の暗号に挑む」を主ボタンにし、「次の人へ」は副ボタンになる */
+  readonly hasNext: boolean;
+  /** 「次の暗号に挑む」。次のステージの傍受演出へ進む */
+  readonly onNext: () => void;
   /** 「もっと知る」を開く */
   readonly onMore: () => void;
   readonly onRestart: () => void;
 }
 
 /** クリア画面。左に解読した電文（判子つき）、右に試した鍵の数と強い暗号との対比を見せる */
-export function ClearScreen({ game, tried, total, revisited, onMore, onRestart }: ClearScreenProps) {
+export function ClearScreen({ game, tried, total, revisited, hasNext, onNext, onMore, onRestart }: ClearScreenProps) {
   useIdleTimeout(IDLE_MS, onRestart);
   const { stage, puzzle, record } = game;
   const { debrief } = stage;
+  const values = { total: String(total) };
 
   return (
     <main className="screen clear">
@@ -33,28 +39,37 @@ export function ClearScreen({ game, tried, total, revisited, onMore, onRestart }
         </p>
       </section>
       <section className="clear-result">
-        <p className="clear-count-sub">{total} 通りのうち</p>
+        <p className="clear-count-sub">{fillPlaceholders(debrief.lead, values)}</p>
         <p className="clear-count">
           <strong>{tried}</strong> 通りで破った
         </p>
         <dl className="versus">
-          <div className="versus-row">
-            <dt>{stage.title}の鍵</dt>
-            <dd className="mono">{total} 通り</dd>
-          </div>
-          <div className="versus-row">
-            <dt>{debrief.rivalName}の鍵</dt>
-            <dd className="mono wrap">
-              {debrief.rivalKeys} <span className="nowrap">通り</span>
-            </dd>
-            <dd className="duration">{debrief.rivalDuration}</dd>
-          </div>
+          {debrief.rows.map((row) => (
+            <div key={row.label} className="versus-row">
+              <dt>{row.label}</dt>
+              <dd className="mono wrap">
+                {fillPlaceholders(row.value, values)} <span className="nowrap">{row.unit}</span>
+              </dd>
+              {row.note ? <dd className="duration">{row.note}</dd> : null}
+            </div>
+          ))}
         </dl>
         <p className="closing">{debrief.closing}</p>
         <div className="clear-actions">
-          <button type="button" className="primary" onClick={onRestart}>
-            次の人へ
-          </button>
+          {hasNext ? (
+            <>
+              <button type="button" className="primary" onClick={onNext}>
+                次の暗号に挑む
+              </button>
+              <button type="button" className="secondary" onClick={onRestart}>
+                次の人へ
+              </button>
+            </>
+          ) : (
+            <button type="button" className="primary" onClick={onRestart}>
+              次の人へ
+            </button>
+          )}
           <button type="button" className="secondary" onClick={onMore}>
             もっと知る
           </button>

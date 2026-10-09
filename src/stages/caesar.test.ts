@@ -15,7 +15,7 @@ describe('caesarStage.generate', () => {
   it('鍵は 1〜25 で、鍵で復号すると平文に戻る', () => {
     for (let seed = 0; seed < 500; seed++) {
       const puzzle = caesarStage.generate(seeded(seed));
-      const key = Number(puzzle.keyLabel);
+      const key = Number(puzzle.hintValues['key']);
       expect(Number.isInteger(key)).toBe(true);
       expect(key).toBeGreaterThanOrEqual(1);
       expect(key).toBeLessThanOrEqual(25);
@@ -30,7 +30,7 @@ describe('caesarStage.generate', () => {
     const random = seeded(42);
     for (let i = 0; i < 2000; i++) {
       const puzzle = caesarStage.generate(random);
-      keys.add(puzzle.keyLabel);
+      keys.add(puzzle.hintValues['key'] ?? '');
       plaintexts.add(puzzle.plaintext);
     }
     expect(keys.size).toBe(25);
@@ -40,7 +40,7 @@ describe('caesarStage.generate', () => {
   it('乱数が 0 や 1 に近い端でも範囲を外れない', () => {
     for (const r of [0, 0.999999999, 1]) {
       const puzzle = caesarStage.generate(() => r);
-      const key = Number(puzzle.keyLabel);
+      const key = Number(puzzle.hintValues['key']);
       expect(key).toBeGreaterThanOrEqual(1);
       expect(key).toBeLessThanOrEqual(25);
       expect(decrypt(puzzle.ciphertext, key)).toBe(puzzle.plaintext);

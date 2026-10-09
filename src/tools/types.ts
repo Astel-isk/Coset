@@ -13,7 +13,12 @@ import type { ComponentType } from 'react';
  */
 export type ToolMount =
   /** モジュラー時計盤。mod modulus の目盛りを回す（DESIGN.md §4） */
-  | { readonly id: 'modular-clock'; readonly modulus: number };
+  | { readonly id: 'modular-clock'; readonly modulus: number }
+  /**
+   * 円盤を count 枚並べた時計盤（ヴィジュネル暗号。鍵が count 文字）。1 枚が 1 文字ぶんの鍵を受け持つ。
+   * 各円盤は mod modulus。onAttempts の tried は 3 枚の合計、total は modulus × count
+   */
+  | { readonly id: 'multi-clock'; readonly modulus: number; readonly count: number };
 
 export type ToolId = ToolMount['id'];
 

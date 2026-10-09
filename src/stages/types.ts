@@ -12,12 +12,18 @@ import type { ToolMount } from '../tools/types';
  */
 
 /** ステージの識別子。ステージを追加するときはここに足す */
-export type StageId = 'caesar';
+export type StageId = 'caesar' | 'vigenere';
 
-/** 与件として提示する手がかり（DESIGN.md §2 の「解読の手がかり」列） */
+/**
+ * 与件として提示する手がかり（DESIGN.md §2 の「解読の手がかり」列）。
+ * 画面には「label value suffix」の順に並べる（例: 「最初の単語は HIMITSU らしい」）。
+ * 出題ごとに変わる与件（最初の単語など）は Puzzle.givens が持つ。
+ */
 export interface Given {
   readonly label: string;
   readonly value: string;
+  /** value の後ろに添える語（例: らしい） */
+  readonly suffix?: string;
 }
 
 /**
@@ -25,7 +31,8 @@ export interface Given {
  *
  * 3 段の順序と役割（手がかり → 構造の開示 → 解答の提示）は全ステージで固定（DESIGN.md §3）。
  * カードに出す名前（label）は、簡易版ではステージのデータに持たせる。
- * body には `{key}` を書ける。ランナーが Puzzle.keyLabel で置き換える。
+ * body には `{名前}` の形で差し込み位置を書ける（例: `{key}`、`{k1}`）。
+ * ランナーが Puzzle.hintValues の同じ名前の値で置き換える。
  */
 export interface Hint {
   /** カードの名前（例: 手がかり・仕組み・答え） */
@@ -70,21 +77,36 @@ export interface Puzzle {
   readonly plaintext: string;
   /** 平文の和訳（クリア画面で見せる） */
   readonly translation: string;
-  /** ヒントの `{key}` に入れる鍵の表記 */
-  readonly keyLabel: string;
+  /** 出題ごとの与件（例: 鍵の長さ、最初の単語）。なければ空配列 */
+  readonly givens: readonly Given[];
+  /**
+   * ヒント本文の `{名前}` に入れる値（その回の鍵の表記など）。
+   * 例: シーザー暗号は `{ key: '17' }`、ヴィジュネル暗号は `{ k1: '3', k2: '17', k3: '9' }`
+   */
+  readonly hintValues: Readonly<Record<string, string>>;
+}
+
+/** クリア画面の対比の 1 行（例: 並べ替え暗号の鍵 403,… 通り） */
+export interface DebriefRow {
+  /** 行の名前（例: 並べ替え暗号の鍵） */
+  readonly label: string;
+  /** 鍵の数。桁をそのまま見せる文字列（例: 403,291,…）。`{total}` を書ける */
+  readonly value: string;
+  /** value の単位（例: 通り）。長い数が折り返しても単位だけが次の行へ落ちないよう、分けて持つ */
+  readonly unit: string;
+  /** 補足の文（例: 1 秒に 1 億通り試しても 約 1,300 億年）。なければ出さない */
+  readonly note?: string;
 }
 
 /**
- * クリア画面の「強い暗号との対比」（簡易版）。
- * 解読した側の鍵の数は、ステージ名と時計盤が返す総数（total）から画面が作るので、ここには持たない。
+ * クリア画面の「n 通りで破った」と対比（簡易版）。
+ * 文中の `{total}` は、時計盤が返す鍵の総数（ステージ 1 は 26、ステージ 2 は 78）に画面が置き換える。
  */
 export interface Debrief {
-  /** 比較対象の暗号の名前（例: 並べ替え暗号） */
-  readonly rivalName: string;
-  /** 比較対象の鍵の数。桁をそのまま見せる文字列（例: 403,291,…） */
-  readonly rivalKeys: string;
-  /** 全部試すのにかかる時間の文（例: 1 秒に 1 億通り試しても 約 1,300 億年） */
-  readonly rivalDuration: string;
+  /** 「n 通りで破った」の上に出す文（例: `{total} 通りのうち`、`分ければ {total} 通りのうち`） */
+  readonly lead: string;
+  /** 対比の行。上から順に並べる */
+  readonly rows: readonly DebriefRow[];
   /** 締めの一言 */
   readonly closing: string;
 }
@@ -99,6 +121,7 @@ export interface Stage {
   readonly flavor: string;
   /** 導入解説（日本語）。そのステージで何に気づかせるか */
   readonly briefing: string;
+  /** ステージ共通の与件。出題ごとに変わるものは Puzzle.givens に持たせる */
   readonly givens: readonly Given[];
   /** 装備する可視化ツール。実体は tools/ のレジストリが解決する */
   readonly tools: readonly ToolMount[];

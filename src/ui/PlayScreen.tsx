@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ToolHost } from '../tools/ToolHost';
 import type { Game } from './game';
-import { fillHint, isCorrect } from './logic';
+import { fillPlaceholders, isCorrect } from './logic';
 import { paperHead } from './record';
 import { useIdleTimeout } from './useIdleTimeout';
 
@@ -18,6 +18,8 @@ interface PlayScreenProps {
 /** 解読画面。ツール（時計盤）が返す候補平文を、「これで解読」で判定する */
 export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
   const { stage, puzzle, record } = game;
+  // ステージ共通の与件と、出題ごとの与件（最初の単語など）
+  const givens = [...stage.givens, ...puzzle.givens];
   const [candidate, setCandidate] = useState('');
   const [attempts, setAttempts] = useState({ tried: 0, total: 0 });
   const [openedHints, setOpenedHints] = useState(0);
@@ -42,7 +44,7 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
   };
 
   return (
-    <main className="screen play">
+    <main className="screen play" data-tool={stage.tools[0]?.id}>
       <header className="play-head">
         <p className="record">
           傍受記録 {record.no} ・ {stage.title}
@@ -65,6 +67,20 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
         />
       ))}
 
+      {givens.length > 0 ? (
+        <dl className="givens" aria-label="与件">
+          {givens.map((given) => (
+            <div key={given.label} className="given">
+              <dt>{given.label}</dt>
+              <dd>
+                <span className="mono">{given.value}</span>
+                {given.suffix ? ` ${given.suffix}` : ''}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
       <div className="play-actions">
         <button type="button" className="primary" onClick={submit}>
           これで解読
@@ -80,7 +96,7 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
             return (
               <div key={hint.label} className="hint opened">
                 <p className="hint-label">{hint.label}</p>
-                <p className="hint-body">{fillHint(hint.body, puzzle.keyLabel)}</p>
+                <p className="hint-body">{fillPlaceholders(hint.body, puzzle.hintValues)}</p>
               </div>
             );
           }

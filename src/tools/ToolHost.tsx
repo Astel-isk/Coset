@@ -14,5 +14,9 @@ export function ToolHost({ mount, ...props }: ToolHostProps) {
       const Tool = toolRegistry[mount.id];
       return <Tool mount={mount} {...props} />;
     }
+    case 'multi-clock': {
+      const Tool = toolRegistry[mount.id];
+      return <Tool mount={mount} {...props} />;
+    }
   }
 }

@@ -128,10 +128,17 @@ export const caesarStage: Stage = {
     normalize: { ignoreCase: true, ignoreWhitespace: true, ignorePunctuation: true },
   },
   debrief: {
-    rivalName: '並べ替え暗号',
-    // 26! を桁のまま見せる（指数表記にしない。EXHIBITION.md「クリア画面」）
-    rivalKeys: '403,291,461,126,605,635,584,000,000',
-    rivalDuration: '1 秒に 1 億通り試しても 約 1,300 億年',
+    lead: '{total} 通りのうち',
+    rows: [
+      { label: 'シーザー暗号の鍵', value: '{total}', unit: '通り' },
+      {
+        label: '並べ替え暗号の鍵',
+        // 26! を桁のまま見せる（指数表記にしない。EXHIBITION.md「クリア画面」）
+        value: '403,291,461,126,605,635,584,000,000',
+        unit: '通り',
+        note: '1 秒に 1 億通り試しても 約 1,300 億年',
+      },
+    ],
     closing: 'だから暗号には、もっと賢い仕組み（代数）が要る',
   },
   notes: NOTES,
@@ -144,7 +151,8 @@ export const caesarStage: Stage = {
       ciphertext: encrypt(message.plaintext, key),
       plaintext: message.plaintext,
       translation: message.translation,
-      keyLabel: String(key),
+      givens: [],
+      hintValues: { key: String(key) },
     };
   },
 };

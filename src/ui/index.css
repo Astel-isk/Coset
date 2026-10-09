@@ -23,6 +23,8 @@
   --paper-rule: #c9bfa8;
   /* 朱（唯一の色） */
   --accent: #d6452b;
+  /* 円盤が複数枚のとき、操作対象でない円盤の読み取り窓（灰） */
+  --window-off: #5f7490;
   --sans: 'Yu Gothic UI', 'Hiragino Sans', system-ui, sans-serif;
   --mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
   /* 1366px で約 19px、1920px で約 22px */
@@ -503,6 +505,191 @@ button.primary {
 .hint.locked {
   color: var(--sub);
   opacity: 0.55;
+}
+
+/* ---- 解読画面（円盤が複数枚のツール） ----
+ * 円盤を上段に横並びにし、右にボタン類、下段に電文の紙とヒントを置く。
+ * 方式ごとの分岐ではなく、ツールの ID（data-tool）で配置を切り替える。 */
+
+.play[data-tool='multi-clock'] {
+  --dial: min(36vh, 20.5vw);
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'head head'
+    'dials flavor'
+    'dials controls'
+    'dials actions'
+    'dials givens'
+    'paper paper'
+    'hints hints';
+}
+
+.play[data-tool='multi-clock'] .play-head {
+  grid-area: head;
+}
+
+.play[data-tool='multi-clock'] .flavor {
+  grid-area: flavor;
+}
+
+.play[data-tool='multi-clock'] .tool-dials {
+  grid-area: dials;
+}
+
+.play[data-tool='multi-clock'] .tool-controls {
+  grid-area: controls;
+}
+
+.play[data-tool='multi-clock'] .play-actions {
+  grid-area: actions;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.2rem 1rem;
+}
+
+.play[data-tool='multi-clock'] .feedback {
+  flex-basis: 100%;
+  min-height: 3.2em;
+}
+
+.play[data-tool='multi-clock'] .givens {
+  grid-area: givens;
+  align-self: end;
+}
+
+.play[data-tool='multi-clock'] .tool-text {
+  grid-area: paper;
+  padding: 1vh 1.2vw 1.2vh;
+}
+
+.play[data-tool='multi-clock'] .hints {
+  grid-area: hints;
+}
+
+.play[data-tool='multi-clock'] .hint {
+  min-height: 5.2rem;
+  padding: 0.4em 0.8em;
+}
+
+.tool-dials {
+  display: grid;
+  grid-template-columns: repeat(3, var(--dial));
+  column-gap: 0.8rem;
+  align-self: start;
+}
+
+.multi-dial {
+  padding: 0.25rem;
+  border: 2px solid transparent;
+  border-radius: 6px;
+}
+
+.multi-dial.active {
+  border-color: var(--sub);
+}
+
+.multi-dial .dial-window-note {
+  margin-top: 0.2vh;
+  font-size: 0.85rem;
+}
+
+.multi-dial .dial-window-note strong {
+  font-size: 1.25rem;
+}
+
+.multi-dial .attempts {
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.multi-dial .attempts strong {
+  font-size: 1.2rem;
+}
+
+.dial-window.off {
+  stroke: var(--window-off);
+}
+
+.dial-tick.current.off {
+  stroke: var(--ink);
+}
+
+.tool-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.multi-target {
+  color: var(--sub);
+}
+
+.multi-target strong {
+  font-size: 1.4rem;
+  color: var(--ink);
+}
+
+.givens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-left: 0.8rem;
+  border-left: 3px solid var(--line);
+}
+
+.given {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+
+.given dt {
+  font-size: 0.85rem;
+  color: var(--sub);
+}
+
+.given dd {
+  font-size: 0.95rem;
+}
+
+.given dd .mono {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* 電文の紙: 操作対象の円盤が受け持つ文字を濃く（own）、他を薄く（dim）描く。文字の下に円盤の番号を添える */
+.tool-multi .words {
+  gap: 0.8vh 1.1rem;
+}
+
+.tool-multi .word {
+  --cell: 1.05rem;
+}
+
+.word-owner {
+  font-size: 0.65rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.word-cipher .cell.own,
+.word-owner .cell.own {
+  color: var(--paper-sub);
+}
+
+.word-cipher .cell.dim,
+.word-owner .cell.dim {
+  color: #d0c7b1;
+}
+
+.word-restored .cell.own {
+  color: var(--paper-ink);
+}
+
+.word-restored .cell.dim {
+  color: #b9b09b;
 }
 
 /* ---- クリア画面 ---- */
