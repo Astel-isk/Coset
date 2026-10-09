@@ -1,32 +1,76 @@
-import type { Stage } from './types';
+import { encrypt } from './caesarStub';
+import type { Puzzle, Stage } from './types';
+
+/** 出題の候補。平文はローマ字（簡易版の暫定判断。EXHIBITION.md「出題」） */
+const MESSAGES: readonly { readonly plaintext: string; readonly translation: string }[] = [
+  {
+    plaintext: 'ASHITA NO YORU HACHIJI NI KYUUKOUSHA NO URA DE MATSU',
+    translation: '明日の夜八時に旧校舎の裏で待つ',
+  },
+  {
+    plaintext: 'ANGOUSHO WA TOSHOSHITSU NO ICHIBAN UE NO TANA NI KAKUSHITA',
+    translation: '暗号書は図書室のいちばん上の棚に隠した',
+  },
+  {
+    plaintext: 'KONO TSUUSHIN WO YONDARA SUGU NI MOYASHITE KURE',
+    translation: 'この通信を読んだらすぐに燃やしてくれ',
+  },
+];
+
+/** 鍵の最小値と最大値。0 は暗号化しないことになるので除く */
+const KEY_MIN = 1;
+const KEY_MAX = 25;
+
+/** [0, n) の整数を一様に選ぶ。random が 1 に達しても範囲外に出さない */
+function randomInt(random: () => number, n: number): number {
+  return Math.min(n - 1, Math.floor(random() * n));
+}
 
 /**
  * ステージ 1: シーザー暗号。
  *
  * 教訓は「鍵空間が小さいから破れる」に置く（DESIGN.md §2「統計的手法の扱い」）。
- * 平文・暗号文の文面は差し替えてよい。暗号文は平文をシフト 7 で暗号化したもの。
+ * 鍵は出題のたびに 1〜25 から一様に選ぶ。
  */
 export const caesarStage: Stage = {
   id: 'caesar',
   order: 1,
   title: 'シーザー暗号',
-  flavor: '前線から届いた最初の傍受通信。文字が一定の規則でずれているらしい。',
+  flavor: '傍受した通信。文字が一定の規則でずれているらしい。円盤を回して、読める文を探せ。',
   briefing:
     'この暗号は、文字をアルファベット順に一定数ずらすだけの方式。ずらす量が鍵で、'
     + '取りうる値は 26 通りしかない。鍵の候補を全部試せてしまう暗号は、それだけで破れる。',
-  ciphertext: 'DL TVCL AOL HYJOPCL HA KHDU IBYU AOPZ HMALY YLHKPUN',
-  givens: [{ label: '鍵空間', value: '26 通り' }],
+  givens: [],
   tools: [{ id: 'modular-clock', modulus: 26 }],
   hints: [
     { body: '鍵の候補は何通りある? 全部試せる数だろうか' },
     {
       body:
-        '暗号化は文字を数に直した上での mod 26 の加法。鍵はシフト量ひとつだけ',
+        '文字を A=0, B=1, …, Z=25 の数に直し、鍵の数だけ足して 26 で割った余りをとる暗号。'
+        + '鍵はずらし量ひとつだけ',
     },
-    { body: '鍵は 7。時計盤を 7 だけ戻せば平文が出る' },
+    { body: '鍵は {key}。円盤を {key} に合わせて「これで解読」を押す' },
   ],
   clear: {
-    plaintext: 'WE MOVE THE ARCHIVE AT DAWN BURN THIS AFTER READING',
     normalize: { ignoreCase: true, ignoreWhitespace: true, ignorePunctuation: true },
+  },
+  debrief: {
+    lesson: '鍵が 26 通りしかない暗号は、全部試せば必ず破れる。',
+    contrast:
+      '文字の対応をバラバラに並べ替える暗号なら、鍵は 26! ≈ 4×10²⁶ 通り。'
+      + '1 秒に 1 億通り試しても約 1,300 億年かかる。',
+    closing: 'だから暗号には、もっと賢い仕組み（代数）が要る。',
+  },
+  generate(random: () => number): Puzzle {
+    const key = KEY_MIN + randomInt(random, KEY_MAX - KEY_MIN + 1);
+    // 候補は 1 件以上あるので、undefined にはならない。noUncheckedIndexedAccess のため先頭で受ける
+    const message = MESSAGES[randomInt(random, MESSAGES.length)] ?? MESSAGES[0];
+    if (!message) throw new Error('出題の候補が空');
+    return {
+      ciphertext: encrypt(message.plaintext, key),
+      plaintext: message.plaintext,
+      translation: message.translation,
+      keyLabel: String(key),
+    };
   },
 };

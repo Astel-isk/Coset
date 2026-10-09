@@ -1,20 +1,436 @@
+/*
+ * 展示用の画面（EXHIBITION.md）。1920×1080 を基準に、1366×768 でもスクロールなしで収める。
+ * PC 室の全画面表示用なので、配色はライト固定。システムフォントのみ使い、外部リソースは参照しない。
+ * アクセント色は 1 色（--accent）だけ。
+ */
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  color-scheme: light;
+  --bg: #f6f4ef;
+  --panel: #ffffff;
+  --ink: #1d2433;
+  --muted: #667085;
+  --line: #c9ceda;
+  --accent: #1b5fc1;
+  --radius: 8px;
+  --sans: system-ui, 'Yu Gothic UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, 'SFMono-Regular', Menlo, 'Courier New', monospace;
+  /* 1366px で約 19px、1920px で約 22px */
+  font-size: clamp(18px, calc(0.6vw + 11px), 23px);
+  font-family: var(--sans);
+  font-feature-settings: 'palt';
   line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
+  overflow: hidden;
 }
 
-.app {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+p,
+h1,
+ol {
+  margin: 0;
 }
 
-.note {
-  opacity: 0.7;
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.4em 1.2em;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+  padding: 0.5em 2em;
+}
+
+button.primary:hover {
+  filter: brightness(1.08);
+}
+
+button.secondary {
+  color: var(--muted);
+}
+
+.screen {
+  height: 100vh;
+  height: 100dvh;
+  padding: 3vh 3vw;
+  overflow: hidden;
+}
+
+/* ---- 円盤 ---- */
+
+.dial {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.dial-outer-ring {
+  fill: var(--panel);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.dial-inner-ring {
+  fill: #e8eefb;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.dial-hub {
+  fill: var(--panel);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.dial-outer-letter {
+  font: 700 13px var(--mono);
+  fill: var(--ink);
+}
+
+.dial-inner-letter {
+  font: 700 12px var(--mono);
+  fill: var(--accent);
+}
+
+.dial-hub-label {
+  font: 8px var(--sans);
+  fill: var(--muted);
+}
+
+.dial-hub-value {
+  font: 700 32px var(--mono);
+  fill: var(--ink);
+}
+
+.dial-inner {
+  transition: transform 0.18s ease-out;
+}
+
+/* ---- 待機画面 ---- */
+
+.idle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6vw;
+  cursor: pointer;
+}
+
+.idle-dial {
+  width: min(70vh, 40vw);
+  flex: none;
+}
+
+.idle .dial-inner {
+  animation: idle-spin 90s linear infinite;
+  transition: none;
+}
+
+@keyframes idle-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.title {
+  font-size: 5rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+
+.subtitle {
+  font-size: 1.6rem;
+  color: var(--muted);
+}
+
+.tagline {
+  margin-top: 2.5rem;
+  font-size: 1.5rem;
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 2rem;
+  padding: 0.5em 2em;
+  color: #fff;
+  background: var(--accent);
+  border-radius: var(--radius);
+  font-weight: 700;
+}
+
+/* ---- 解読画面 ---- */
+
+.play {
+  --dial: min(52vh, 40vw, 560px);
+  display: grid;
+  grid-template-columns: var(--dial) minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr;
+  align-content: start;
+  column-gap: 3vw;
+  row-gap: 1.2vh;
+}
+
+.play-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.stage-title {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.flavor {
+  max-width: 48em;
+}
+
+/* ツールの根はグリッドの項目を直接並べるため、箱を作らない */
+.tool {
+  display: contents;
+}
+
+.tool-dial {
+  grid-column: 1;
+  grid-row: 2 / span 3;
+}
+
+.dial-wrap {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.dial-wrap:active {
+  cursor: grabbing;
+}
+
+.dial-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.8vh;
+}
+
+.dial-controls button {
+  min-width: 3.2em;
+  font-weight: 700;
+}
+
+.attempts {
+  font-size: 1.1rem;
+}
+
+.attempts strong {
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.dots {
+  display: flex;
+  justify-content: space-between;
+  padding: 0;
+  margin-top: 1vh;
+  list-style: none;
+}
+
+.dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+}
+
+.dot.tried {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.dot.current {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ink);
+}
+
+.tool-text {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 1.2vh 1.5vw;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6vh 1.4rem;
+}
+
+.word {
+  display: flex;
+  flex-direction: column;
+  font: 700 1.3rem/1.5 var(--mono);
+  letter-spacing: 0.12em;
+}
+
+.word-cipher {
+  color: var(--muted);
+}
+
+.word-restored {
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+}
+
+.words-legend {
+  margin-top: 1vh;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.play-actions {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.feedback {
+  min-height: 1.6em;
+  font-weight: 700;
+}
+
+.hints {
+  grid-column: 2;
+  grid-row: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8vh;
+}
+
+.hint {
+  margin: 0;
+  text-align: left;
+}
+
+.hint.ready {
+  align-self: flex-start;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.hint.opened {
+  padding: 0.5vh 1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--panel);
+}
+
+.hint-label {
+  margin-right: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.hint.locked {
+  padding: 0.5vh 0;
   font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ---- クリア画面 ---- */
+
+.clear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6vh;
+  text-align: center;
+}
+
+.clear-title {
+  font-size: 3.2rem;
+  color: var(--accent);
+}
+
+.clear-plain {
+  font: 700 1.6rem/1.5 var(--mono);
+  letter-spacing: 0.1em;
+}
+
+.clear-translation {
+  font-size: 1.6rem;
+}
+
+.clear-count {
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+.clear-count strong {
+  font-size: 1.8rem;
+  color: var(--ink);
+}
+
+.debrief {
+  max-width: 44em;
+  padding: 2vh 2vw;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.debrief p + p {
+  margin-top: 0.6em;
+}
+
+.lesson {
+  font-weight: 700;
+}
+
+/* ---- 動きを減らす設定 ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .idle .dial-inner {
+    animation: none;
+  }
+
+  .dial-inner {
+    transition: none;
+  }
 }

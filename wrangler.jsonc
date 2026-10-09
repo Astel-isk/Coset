@@ -1,0 +1,11 @@
+{
+  // 簡易版（立花祭 2026 展示）を Cloudflare Workers の静的アセットとして配信する。
+  // Worker のコードは持たない（main なし）。デプロイは `npm run deploy`（本人が実行する）。
+  "name": "coset",
+  "compatibility_date": "2026-10-09",
+  "assets": {
+    "directory": "./dist"
+  },
+  "routes": [{ "pattern": "coset.astelisk.com", "custom_domain": true }],
+  "workers_dev": false
+}

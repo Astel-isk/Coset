@@ -6,6 +6,9 @@ import type { ToolMount } from '../tools/types';
  * ステージは「データ」として書き、画面はランナー（ui/）がこのデータから組む
  * （DESIGN.md §5「ステージ定義の形式」）。ステージごとに画面を組むコードは書かない。
  * ランナーが暗号方式を知っている状態を作らないため、方式に固有の設定はツール側（ToolMount）へ寄せる。
+ *
+ * 簡易版（EXHIBITION.md）では鍵が来場者ごとに実行時に決まるため、暗号文はデータに持たず、
+ * 出題を作る関数（Stage.generate）を持たせる。
  */
 
 /** ステージの識別子。ステージを追加するときはここに足す */
@@ -22,6 +25,7 @@ export interface Given {
  *
  * 3 段の順序と役割（手がかり → 構造の開示 → 解答の提示）は全ステージで固定なので、
  * 段の名前はデータに持たせず、ランナー側の定数とする（DESIGN.md §3）。
+ * body には `{key}` を書ける。ランナーが Puzzle.keyLabel で置き換える。
  */
 export interface Hint {
   readonly body: string;
@@ -38,11 +42,31 @@ export interface NormalizeRule {
   readonly ignorePunctuation: boolean;
 }
 
-/** クリア判定。鍵ではなく平文の一致で判定する（DESIGN.md §3） */
+/** クリア判定。鍵ではなく平文の一致で判定する（DESIGN.md §3）。正解の平文は Puzzle が持つ */
 export interface ClearCondition {
-  /** 正解の平文（英語） */
-  readonly plaintext: string;
   readonly normalize: NormalizeRule;
+}
+
+/** 1 回ぶんの出題。Stage.generate が作る */
+export interface Puzzle {
+  /** 傍受した暗号文 */
+  readonly ciphertext: string;
+  /** 正解の平文 */
+  readonly plaintext: string;
+  /** 平文の和訳（クリア画面で見せる） */
+  readonly translation: string;
+  /** ヒントの `{key}` に入れる鍵の表記 */
+  readonly keyLabel: string;
+}
+
+/** クリア画面で見せる締めくくりの文章（簡易版） */
+export interface Debrief {
+  /** 教訓 */
+  readonly lesson: string;
+  /** 強い暗号との対比 */
+  readonly contrast: string;
+  /** 対比の締めの一言 */
+  readonly closing: string;
 }
 
 export interface Stage {
@@ -55,11 +79,12 @@ export interface Stage {
   readonly flavor: string;
   /** 導入解説（日本語）。そのステージで何に気づかせるか */
   readonly briefing: string;
-  /** 傍受した暗号文（英語） */
-  readonly ciphertext: string;
   readonly givens: readonly Given[];
   /** 装備する可視化ツール。実体は tools/ のレジストリが解決する */
   readonly tools: readonly ToolMount[];
   readonly hints: HintSet;
   readonly clear: ClearCondition;
+  readonly debrief: Debrief;
+  /** 出題を作る。random は [0, 1) の一様乱数を返す関数（テストでは固定列を渡せる） */
+  readonly generate: (random: () => number) => Puzzle;
 }

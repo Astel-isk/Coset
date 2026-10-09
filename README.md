@@ -28,7 +28,10 @@
 
 ## ステータス
 
-雛形のみ（TypeScript + React + Vite + Vitest）。ステージ 1（シーザー暗号＋モジュラー時計盤）は未実装。
+簡易版（立花祭 2026 展示、[EXHIBITION.md](EXHIBITION.md)）の画面を実装済み。ステージ 1（シーザー暗号＋モジュラー時計盤）を、待機 → 解読 → クリアの 3 画面で遊べる。
+シーザー暗号の暗号化・復号は `src/stages/caesarStub.ts` の仮実装で代用しており、`src/core/ciphers/caesar.ts` の実装後に差し替える。
+`https://coset.astelisk.com`（Cloudflare Workers の静的アセット）で配信する予定で、`dist/index.html` 単体でもダブルクリックで開ける。
+本編（ステージ 2 以降）は未着手。
 
 ## 開発
 
@@ -36,8 +39,9 @@
 npm install
 npm run dev       # 開発サーバー
 npm run verify    # 型検査 → Lint → テスト
-npm run build     # dist/ に出力
+npm run build     # dist/index.html に JS・CSS を埋め込んだ単一ファイルを出力
 npm run preview   # ビルド結果をローカルで配信（展示用）
+npm run deploy    # ビルド → wrangler deploy（coset.astelisk.com へ。本人が実行する）
 ```
 
 ## ライセンス

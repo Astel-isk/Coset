@@ -32,6 +32,11 @@ export interface ToolProps<K extends ToolId> {
   readonly ciphertext: string;
   /** プレイヤーの操作で候補平文が変わったときに呼ぶ */
   readonly onCandidate: (plaintext: string) => void;
+  /**
+   * 試した鍵の数が変わったときに呼ぶ（tried: これまでに試した鍵の種類数、total: 鍵の総数）。
+   * クリア画面の「26 通りのうち n 通り試して破った」に使う（EXHIBITION.md）。
+   */
+  readonly onAttempts: (tried: number, total: number) => void;
 }
 
 /** ID からツールの実体を引くレジストリ。全 ToolId を埋めないと型検査が通らない */

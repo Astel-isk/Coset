@@ -9,3 +9,6 @@ Thumbs.db
 
 # Claude Code の個人設定（.claude/settings.json はリポジトリで共有する）
 .claude/settings.local.json
+
+# wrangler のローカル状態
+.wrangler/
