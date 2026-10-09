@@ -94,6 +94,17 @@ describe('reducer', () => {
     expect(run(initialState(3), { type: 'align', key: 14, modulus: M }).pos[0]).toBe(-12);
   });
 
+  it('align に dial を渡すと、その円盤を操作対象にしてから合わせる（操作対象も切り替わる）', () => {
+    const s = run(initialState(3), { type: 'align', key: 16, modulus: M, dial: 2 });
+    expect(s.active).toBe(2);
+    expect(currentKeys(s, M)).toEqual([0, 0, 16]);
+    expect(s.tried.map((t) => [...t])).toEqual([[], [], [16]]);
+    // 範囲外の dial は切り替えず、今の操作対象に合わせる
+    const t = run(initialState(3), { type: 'align', key: 5, modulus: M, dial: 3 });
+    expect(t.active).toBe(0);
+    expect(currentKeys(t, M)).toEqual([5, 0, 0]);
+  });
+
   it('align で開始時の鍵（0）に合わせた場合も、まだ試していなければ数える', () => {
     const s = run(initialState(3), { type: 'align', key: 0, modulus: M });
     expect(s.pos).toEqual([0, 0, 0]);

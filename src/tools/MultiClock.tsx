@@ -3,6 +3,8 @@ import type { PointerEvent } from 'react';
 import { decrypt } from '../stages/vigenereStub'; // core/ciphers/vigenere.ts の実装後にここを差し替える
 import { ALPHABET, normalizeAngleDelta, pairWords } from './clock';
 import { Dial } from './Dial';
+import { alignedMessage, columnClasses, columnPair, pickableColumns, toggleColumn } from './calcSteps';
+import type { ColumnPick } from './calcSteps';
 import { restoreSentence } from './formula';
 import { KeyCalculator } from './KeyCalculator';
 import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from './mapping';
@@ -14,7 +16,7 @@ import type { ToolProps } from './types';
 /** ホイールを何ピクセルぶん回すと 1 目盛り進むか */
 const WHEEL_PX_PER_STEP = 50;
 
-/** 鍵の計算機に手がかりの単語として渡す与件の id（stages/vigenere.ts の最初の単語。EXHIBITION.md「代数を使う」） */
+/** 手がかりの段に並べる与件の id（stages/vigenere.ts の最初の単語。EXHIBITION.md「代数を使う」） */
 const HINT_WORD_ID = 'first-word';
 
 /** 円盤の番号の表記（① ② ③ …） */
@@ -26,8 +28,8 @@ function circled(index: number): string {
  * 1 語の 1 段。1 文字ずつ同じ幅のセルに入れ、上段と下段の字の大きさが違っても文字が縦に揃うようにする。
  * 操作対象の円盤が受け持つ文字を濃く（own）、他を薄く（dim）描く。
  * 文字にマウスを重ねると onHover に位置を渡し（離れたら null）、lit の文字は朱で光らせる。
- * onPick を渡した行（上段の暗号文）は、文字のクリックを位置で通知し、picked の文字は朱で示す
- * （鍵の計算機への入力。重ねて光らせるのは強調で、クリックは入力）。
+ * column を渡した行（最初の単語の各段）は、手がかりのある列のクリックを列の番号で通知し、
+ * 選んだ列は朱の塗り、マウスが乗った列は薄い地で示す（鍵の計算機への入力。重ねて光らせるのは強調で、クリックは入力）。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
 function OwnedRow({
@@ -38,8 +40,7 @@ function OwnedRow({
   word,
   lit,
   onHover,
-  onPick,
-  picked = null,
+  column,
 }: {
   readonly className: string;
   /** 1 文字ずつの表示 */
@@ -50,19 +51,17 @@ function OwnedRow({
   readonly word: number;
   readonly lit: readonly boolean[];
   readonly onHover: (pos: CellPos | null) => void;
-  readonly onPick?: (pos: CellPos) => void;
-  /** 計算機に選んだ文字の、この語の中での添字（この語でなければ null） */
-  readonly picked?: number | null;
+  readonly column?: ColumnPick;
 }) {
   return (
     <span className={className}>
       {cells.map((cell, i) => (
         <span
           key={i}
-          className={`${owners[i] === active ? 'cell own' : 'cell dim'}${lit[i] ? ' hl' : ''}${onPick && owners[i] !== null ? ' pick' : ''}${picked === i ? ' sel' : ''}`}
+          className={`${owners[i] === active ? 'cell own' : 'cell dim'}${lit[i] ? ' hl' : ''}${columnClasses(column, i)}`}
           onMouseEnter={() => onHover({ word, index: i })}
           onMouseLeave={() => onHover(null)}
-          onClick={onPick && owners[i] !== null ? () => onPick({ word, index: i }) : undefined}
+          onClick={column?.pickable[i] ? () => column.onPick(i) : undefined}
         >
           {cell}
         </span>
@@ -108,11 +107,29 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
   const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
   // 対応表は操作対象の円盤の 1 本だけ。電文の出現は、その円盤が受け持つ位置の文字だけで判定する
   const used = useMemo(() => usedCipherLetters(cipherWords, owners, state.active), [cipherWords, owners, state.active]);
-  // 鍵の計算機。選んだ文字は位置で持ち（電文の上段の暗号文の文字と、手がかりの単語の文字）、文字は毎回そこから引く
+  // 鍵の計算機。電文の最初の単語の列を 1 回クリックすると、暗号文の文字と手がかりの文字の組が入る。
+  // 選んだ列は番号だけ持ち、文字・受け持つ円盤は毎回そこから引く。ボタンを押したら解除する
   const hintWord = givens.find((g) => g.id === HINT_WORD_ID)?.value ?? null;
-  const [calcCipher, setCalcCipher] = useState<CellPos | null>(null);
-  const [calcPlain, setCalcPlain] = useState<number | null>(null);
-  const calcCipherLetter = calcCipher ? (cipherWords[calcCipher.word]?.[calcCipher.index] ?? null) : null;
+  const [selCol, setSelCol] = useState<number | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const pickable = useMemo(
+    () => (hintWord === null ? [] : pickableColumns(cipherWords[0], hintWord, modulus)),
+    [cipherWords, hintWord, modulus],
+  );
+  const selPair = hintWord !== null && selCol !== null ? columnPair(cipherWords[0], hintWord, selCol, modulus) : null;
+  const selOwner = selCol !== null ? (owners[0]?.[selCol] ?? null) : null;
+  const columnPick: ColumnPick | undefined =
+    hintWord === null
+      ? undefined
+      : {
+          pickable,
+          selected: selCol,
+          hovered: hover?.word === 0 ? hover.index : null,
+          onPick: (col) => {
+            setSelCol((cur) => toggleColumn(cur, col));
+            setDone(null);
+          },
+        };
   const triedCount = totalTried(state);
   const total = modulus * count;
   const active = state.active;
@@ -254,17 +271,17 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
       </div>
       {hintWord !== null ? (
         <KeyCalculator
-          hintWord={hintWord}
-          cipherLetter={calcCipherLetter}
-          plainIndex={calcPlain}
-          dialLabel={circled(active)}
+          pair={selPair}
+          dialLabel={selOwner === null ? null : circled(selOwner)}
           modulus={modulus}
-          onPickPlain={setCalcPlain}
-          onClear={() => {
-            setCalcCipher(null);
-            setCalcPlain(null);
+          doneMessage={done}
+          onAlign={(key) => {
+            if (selOwner === null) return;
+            // その列を受け持つ円盤を鍵に合わせ、操作対象もその円盤に切り替える。押したら選択を解除する
+            dispatch({ type: 'align', key, modulus, dial: selOwner });
+            setSelCol(null);
+            setDone(alignedMessage(circled(selOwner), key));
           }}
-          onAlign={(key) => dispatch({ type: 'align', key, modulus })}
         />
       ) : null}
       <MappingStrip
@@ -287,8 +304,10 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
         <div className="words">
           {pairs.map((pair, i) => {
             const wordOwners = owners[i] ?? [];
+            // 最初の単語だけ、暗号文の段と戻した文の段の間に手がかりの段を挟み、列のクリックを受け付ける
+            const column = i === 0 ? columnPick : undefined;
             return (
-              <div key={i} className="word">
+              <div key={i} className={column ? 'word first' : 'word'}>
                 <OwnedRow
                   className="word-cipher"
                   cells={pair.cipher.split('')}
@@ -297,9 +316,20 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
-                  onPick={hintWord !== null ? setCalcCipher : undefined}
-                  picked={calcCipher?.word === i ? calcCipher.index : null}
+                  column={column}
                 />
+                {column && hintWord !== null ? (
+                  <OwnedRow
+                    className="word-hint"
+                    cells={pair.cipher.split('').map((_, j) => hintWord[j] ?? '')}
+                    owners={wordOwners}
+                    active={active}
+                    word={i}
+                    lit={[]}
+                    onHover={setHover}
+                    column={column}
+                  />
+                ) : null}
                 <OwnedRow
                   className="word-restored"
                   cells={pair.restored.split('')}
@@ -308,6 +338,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  column={column}
                 />
                 <OwnedRow
                   className="word-owner"
@@ -317,6 +348,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  column={column}
                 />
               </div>
             );

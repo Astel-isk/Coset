@@ -16,8 +16,11 @@ export type MultiAction =
   | { readonly type: 'select'; readonly dial: number }
   | { readonly type: 'move'; readonly delta: number; readonly modulus: number }
   | { readonly type: 'set'; readonly pos: number; readonly modulus: number }
-  /** 鍵の計算機から。操作対象の円盤を鍵 key に合わせる（近い向きに回し、動かなくても試した鍵に 1 つ数える） */
-  | { readonly type: 'align'; readonly key: number; readonly modulus: number };
+  /**
+   * 鍵の計算機から。円盤を鍵 key に合わせる（近い向きに回し、動かなくても試した鍵に 1 つ数える）。
+   * dial を渡すとその円盤を先に操作対象にする（列を受け持つ円盤へ切り替える）。省けば今の操作対象
+   */
+  | { readonly type: 'align'; readonly key: number; readonly modulus: number; readonly dial?: number };
 
 /** 円盤 count 枚、すべてずらし量 0、先頭の円盤が操作対象の状態。試した鍵はまだ無い */
 export function initialState(count: number): MultiState {
@@ -29,6 +32,10 @@ export function initialState(count: number): MultiState {
 }
 
 export function reducer(state: MultiState, action: MultiAction): MultiState {
+  if (action.type === 'align' && action.dial !== undefined) {
+    const selected = reducer(state, { type: 'select', dial: action.dial });
+    return reducer(selected, { type: 'align', key: action.key, modulus: action.modulus });
+  }
   if (action.type === 'select') {
     if (action.dial === state.active || action.dial < 0 || action.dial >= state.pos.length) return state;
     return { ...state, active: action.dial };

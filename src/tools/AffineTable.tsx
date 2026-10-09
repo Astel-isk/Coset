@@ -3,19 +3,22 @@ import { AffineCalculator } from './AffineCalculator';
 import { AffineStrip } from './AffineStrip';
 import { hoverSentence, isInvertible, keyTotal, restoreText } from './affine';
 import { affineReducer, initialAffineState } from './affineState';
+import { affineAlignedMessage, columnClasses, columnPair, pickableColumns, toggleColumn } from './calcSteps';
+import type { ColumnPick } from './calcSteps';
 import { pairWords } from './clock';
 import { highlightedCells, hoverTarget, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { ownersOfWords } from './multiState';
 import type { ToolProps } from './types';
 
-/** 鍵の計算機に手がかりの単語として渡す与件の id（stages/affine.ts の最初の単語。EXHIBITION.md「ステージ 3」） */
+/** 手がかりの段に並べる与件の id（stages/affine.ts の最初の単語。EXHIBITION.md「ステージ 3」） */
 const HINT_WORD_ID = 'first-word';
 
 /**
  * 1 語の 1 段。1 文字ずつ同じ幅のセルに入れ、上段と下段の字の大きさが違っても文字が縦に揃うようにする。
  * 文字にマウスを重ねると onHover に位置を渡し（離れたら null）、lit の文字は朱で光らせる。
- * onPick を渡した行（上段の暗号文）は、文字のクリックを位置で通知し、picked の文字は朱で示す（鍵の計算機への入力）。
+ * column を渡した行（最初の単語の各段）は、手がかりのある列のクリックを列の番号で通知し、
+ * 選んだ列は朱の塗り、マウスが乗った列は薄い地で示す（鍵の計算機への入力）。
  * 戻した文の「?」（戻し先が 1 つに決まらない文字）は薄く描く。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
@@ -25,8 +28,7 @@ function Row({
   word,
   lit,
   onHover,
-  onPick,
-  picked = null,
+  column,
 }: {
   readonly className: string;
   readonly cells: readonly string[];
@@ -34,19 +36,17 @@ function Row({
   readonly word: number;
   readonly lit: readonly boolean[];
   readonly onHover: (pos: CellPos | null) => void;
-  readonly onPick?: (pos: CellPos) => void;
-  /** 計算機に選んだ文字の、この語の中での添字（この語でなければ null） */
-  readonly picked?: number | null;
+  readonly column?: ColumnPick;
 }) {
   return (
     <span className={className}>
       {cells.map((cell, i) => (
         <span
           key={i}
-          className={`cell${lit[i] ? ' hl' : ''}${onPick ? ' pick' : ''}${picked === i ? ' sel' : ''}${cell === '?' ? ' unknown' : ''}`}
+          className={`cell${lit[i] ? ' hl' : ''}${columnClasses(column, i)}${cell === '?' ? ' unknown' : ''}`}
           onMouseEnter={() => onHover({ word, index: i })}
           onMouseLeave={() => onHover(null)}
-          onClick={onPick ? () => onPick({ word, index: i }) : undefined}
+          onClick={column?.pickable[i] ? () => column.onPick(i) : undefined}
         >
           {cell}
         </span>
@@ -79,11 +79,28 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
   const target = useMemo(() => hoverTarget(cipherWords, owners, hover), [cipherWords, owners, hover]);
   const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
 
-  // 鍵の計算機。選んだ文字は位置で持ち（電文の上段の暗号文の文字と、手がかりの単語の文字）、文字は毎回そこから引く
+  // 鍵の計算機。電文の最初の単語の列を 1 回クリックすると、暗号文の文字と手がかりの文字の組が入る。
+  // 選んだ列は番号だけ持ち、文字は毎回そこから引く。ボタンを押したら解除する
   const hintWord = givens.find((g) => g.id === HINT_WORD_ID)?.value ?? null;
-  const [calcCipher, setCalcCipher] = useState<CellPos | null>(null);
-  const [calcPlain, setCalcPlain] = useState<number | null>(null);
-  const calcCipherLetter = calcCipher ? (cipherWords[calcCipher.word]?.[calcCipher.index] ?? null) : null;
+  const [selCol, setSelCol] = useState<number | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const pickable = useMemo(
+    () => (hintWord === null ? [] : pickableColumns(cipherWords[0], hintWord, modulus)),
+    [cipherWords, hintWord, modulus],
+  );
+  const selPair = hintWord !== null && selCol !== null ? columnPair(cipherWords[0], hintWord, selCol, modulus) : null;
+  const columnPick: ColumnPick | undefined =
+    hintWord === null
+      ? undefined
+      : {
+          pickable,
+          selected: selCol,
+          hovered: hover?.word === 0 ? hover.index : null,
+          onPick: (col) => {
+            setSelCol((cur) => toggleColumn(cur, col));
+            setDone(null);
+          },
+        };
 
   const triedCount = state.tried.size;
   const total = useMemo(() => keyTotal(modulus), [modulus]);
@@ -168,18 +185,17 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
       </section>
       {hintWord !== null ? (
         <AffineCalculator
-          hintWord={hintWord}
-          cipherLetter={calcCipherLetter}
-          plainIndex={calcPlain}
+          pair={selPair}
           a={a}
           invertible={invertible}
           modulus={modulus}
-          onPickPlain={setCalcPlain}
-          onClear={() => {
-            setCalcCipher(null);
-            setCalcPlain(null);
+          doneMessage={done}
+          onAlign={(value) => {
+            // 今の a のまま b を合わせ、選択を解除する
+            dispatch({ type: 'setB', b: value, modulus });
+            setSelCol(null);
+            setDone(affineAlignedMessage(value));
           }}
-          onAlign={(value) => dispatch({ type: 'setB', b: value, modulus })}
         />
       ) : null}
       <AffineStrip a={a} b={b} modulus={modulus} used={used} highlight={target ? target.letter : null} />
@@ -191,26 +207,40 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
           </span>
         </p>
         <div className="words">
-          {pairs.map((pair, i) => (
-            <div key={i} className="word">
-              <Row
-                className="word-cipher"
-                cells={pair.cipher.split('')}
-                word={i}
-                lit={lit[i] ?? []}
-                onHover={setHover}
-                onPick={hintWord !== null ? setCalcCipher : undefined}
-                picked={calcCipher?.word === i ? calcCipher.index : null}
-              />
-              <Row
-                className="word-restored"
-                cells={pair.restored.split('')}
-                word={i}
-                lit={lit[i] ?? []}
-                onHover={setHover}
-              />
-            </div>
-          ))}
+          {pairs.map((pair, i) => {
+            // 最初の単語だけ、暗号文の段と戻した文の段の間に手がかりの段を挟み、列のクリックを受け付ける
+            const column = i === 0 ? columnPick : undefined;
+            return (
+              <div key={i} className={column ? 'word first' : 'word'}>
+                <Row
+                  className="word-cipher"
+                  cells={pair.cipher.split('')}
+                  word={i}
+                  lit={lit[i] ?? []}
+                  onHover={setHover}
+                  column={column}
+                />
+                {column && hintWord !== null ? (
+                  <Row
+                    className="word-hint"
+                    cells={pair.cipher.split('').map((_, j) => hintWord[j] ?? '')}
+                    word={i}
+                    lit={[]}
+                    onHover={setHover}
+                    column={column}
+                  />
+                ) : null}
+                <Row
+                  className="word-restored"
+                  cells={pair.restored.split('')}
+                  word={i}
+                  lit={lit[i] ?? []}
+                  onHover={setHover}
+                  column={column}
+                />
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

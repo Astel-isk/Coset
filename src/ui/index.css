@@ -3,7 +3,7 @@
  * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
  * システムフォントのみ使い、外部リソースは参照しない。
  * 色の約束: 朱（--accent）は 主ボタン・円盤の読み取り窓・判子・円盤の現在の鍵の目盛り・開いたヒントのカード名・
- * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ文字・
+ * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ列と今の手順の番号・
  * アフィン暗号の選択中の a と、戻せない a で重なった列の枠 にだけ使う。
  * 平面的に描く（グラデーション・影・発光を使わない）。
  */
@@ -757,6 +757,18 @@ button.primary {
   padding: 0.4em 0.8em;
 }
 
+/* ヒントの 3 枚は文の長さに合わせて幅を変える（仕組みは長く、答えは短い）。開いたカードの文を 2 行に収めて、高さを節約する */
+.play[data-tool='multi-clock'] .hints,
+.play[data-tool='affine-table'] .hints {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 0.8fr);
+}
+
+.play[data-tool='multi-clock'] .hint.opened .hint-body,
+.play[data-tool='affine-table'] .hint.opened .hint-body {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 .tool-dials {
   display: grid;
   grid-template-columns: repeat(3, var(--dial));
@@ -797,115 +809,103 @@ button.primary {
   stroke: var(--ink);
 }
 
-/* ---- 鍵の計算機（ステージ 2）: 暗号文の文字 − 平文の文字 = 鍵 ---- */
+/* ---- 鍵の計算機（ステージ 2・3）: 見出し・目的・例と、番号付きの 3 手順。今の手順の番号だけ朱 ---- */
 
 .key-calc {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.05rem;
   min-width: 0;
   padding: 0.3rem 0.8rem 0.4rem;
   border: 2px solid var(--line);
   border-radius: 6px;
 }
 
-.calc-hint {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.5rem;
-}
-
 .calc-title {
   font-weight: 700;
   font-size: 0.95rem;
+  line-height: 1.35;
 }
 
-.calc-label {
-  font-size: 0.8rem;
+.calc-purpose,
+.calc-example {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--sub);
+  white-space: nowrap;
+}
+
+.calc-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.calc-step {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  min-height: 1.5rem;
+}
+
+/* 丸の中の手順の番号。今の手順だけ朱で塗る */
+.step-no {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 2px solid var(--window-off);
+  border-radius: 50%;
+  font: 700 0.78rem/1 var(--mono);
   color: var(--sub);
 }
 
-.calc-letters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem;
-}
-
-button.calc-letter {
-  min-height: 1.9rem;
-  width: 1.6rem;
-  padding: 0;
-  font: 700 1.1rem/1 var(--mono);
-  border-width: 2px;
-  border-radius: 4px;
-}
-
-/* 選んだ文字は朱で示す（電文の上段・手がかりの文字とも） */
-button.calc-letter.sel {
+.calc-step.now .step-no {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
 }
 
-.calc-fields {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.6rem;
-}
-
-.calc-field {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.calc-field-label {
-  font-size: 0.72rem;
-  line-height: 1.3;
-  color: var(--sub);
-}
-
-.calc-value {
-  display: flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0 0.6rem;
-  border: 2px solid var(--line);
-  border-radius: 4px;
-  font: 700 1.2rem/1.2 var(--mono);
+.step-text {
+  font-size: 0.85rem;
+  line-height: 1.35;
   white-space: nowrap;
 }
 
-/* 空の欄の案内は薄く */
-.calc-value.guide {
-  font: 0.78rem/1.2 var(--sans);
+/* 手順 2 の式の型（列を選ぶまで）は薄く */
+.step-text.faint {
   color: var(--window-off);
 }
 
-.calc-op {
-  padding-bottom: 0.1rem;
-  font-size: 1.4rem;
-  line-height: 1.9rem;
-  color: var(--sub);
-}
-
 .calc-expression {
-  min-height: 1.4em;
-  font: 700 1.1rem/1.3 var(--mono);
+  min-width: 0;
+  font: 700 1rem/1.3 var(--mono);
   white-space: nowrap;
 }
 
-.calc-buttons {
-  display: flex;
-  gap: 0.6rem;
+.calc-result {
+  flex: none;
+  margin-left: 0.4rem;
+  font: 700 1.1rem/1.3 var(--mono);
 }
 
-button.calc-align,
-button.calc-clear {
+button.calc-align {
   min-height: 2.1rem;
   padding-block: 0.1em;
+  white-space: nowrap;
+}
+
+.calc-caution {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  font-weight: 700;
 }
 
 button:disabled {
@@ -993,12 +993,27 @@ button:disabled:hover {
   color: #b9b09b;
 }
 
-/* 計算機に入れる暗号文の文字（上段）はクリックできる */
-.word-cipher .cell.pick {
-  cursor: pointer;
+/* 手がかりの段: 暗号文の段と戻した文の段の間に、最初の単語の手がかりの文字を点線で挟んで並べる */
+.word-hint {
+  font-size: 0.95rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--paper-sub);
+  border-top: 1px dashed var(--paper-faint);
+  border-bottom: 1px dashed var(--paper-faint);
 }
 
-/* 電文の文字に重ねたときの強調（上段・下段・番号行とも）と、計算機に選んだ文字。操作対象の濃淡より優先する */
+/* 最初の単語の列（手がかりのある列）は、クリックで暗号文と平文の両方が計算機に入る。乗せると薄い地で示す */
+.words .word .cell.pick {
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.words .word .cell.colhov {
+  background: #e6dcc4;
+}
+
+/* 電文の文字に重ねたときの強調（各段とも）と、計算機に選んだ列（中の文字は白）。操作対象の濃淡・列の薄い地より優先する */
 .words .word .cell.hl,
 .words .word .cell.sel {
   color: #fff;
@@ -1182,21 +1197,9 @@ button.b-btn {
   color: var(--ink);
 }
 
-/* 鍵の計算機（アフィン）: 式は長いので少し小さく。注意はボタンの右に置き、行を増やさない */
-.affine-calc .calc-expression {
-  font-size: 0.9rem;
-}
-
-.affine-calc .calc-buttons {
-  align-items: center;
-}
-
-.calc-caution {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.8rem;
-  line-height: 1.3;
-  font-weight: 700;
+/* 鍵の計算機（アフィン）: 式は長いので少し小さく */
+.play[data-tool='affine-table'] .calc-expression {
+  font-size: 0.75rem;
 }
 
 /* 対応表（アフィン）: 上の行が平文（強い色）、下の行が暗号文（弱い色）。重なった列は朱の枠で囲む */
