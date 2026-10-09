@@ -27,6 +27,22 @@ function reducer(state: State, action: Action): State {
   return { pos, tried };
 }
 
+/**
+ * 1 語の 1 段。1 文字ずつ同じ幅のセルに入れ、上段と下段の字の大きさが違っても文字が縦に揃うようにする。
+ * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
+ */
+function WordRow({ className, text }: { readonly className: string; readonly text: string }) {
+  return (
+    <span className={className}>
+      {text.split('').map((ch, i) => (
+        <span key={i} className="cell">
+          {ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 const INITIAL: State = { pos: 0, tried: new Set([0]) };
 
 /**
@@ -114,6 +130,8 @@ export function ModularClock({ mount, ciphertext, onCandidate, onAttempts }: Too
 
   const labels = ALPHABET.slice(0, modulus).split('');
 
+  const windowLetter = labels[mod(-k, modulus)] ?? '';
+
   return (
     <div className="tool">
       <section className="tool-dial" aria-label="時計盤">
@@ -125,8 +143,8 @@ export function ModularClock({ mount, ciphertext, onCandidate, onAttempts }: Too
           onPointerUp={onPointerEnd}
           onPointerCancel={onPointerEnd}
         >
-          <Dial labels={labels} steps={state.pos}>
-            <text className="dial-hub-label" textAnchor="middle" y={-16}>
+          <Dial labels={labels} steps={state.pos} marks={{ tried: state.tried, current: k }} showWindow>
+            <text className="dial-hub-label" textAnchor="middle" y={-17}>
               ずらし量
             </text>
             <text className="dial-hub-value" textAnchor="middle" dominantBaseline="central" y={8}>
@@ -134,33 +152,45 @@ export function ModularClock({ mount, ciphertext, onCandidate, onAttempts }: Too
             </text>
           </Dial>
         </div>
+        <p className="dial-window-note">
+          窓の中: 暗号の <span className="mono">{labels[0]}</span> は 平文の{' '}
+          <strong className="mono" data-testid="window-letter">
+            {windowLetter}
+          </strong>
+        </p>
         <div className="dial-controls">
-          <button type="button" onClick={() => dispatch({ type: 'move', delta: -1, modulus })} aria-label="1 つ戻す">
-            ←
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => dispatch({ type: 'move', delta: -1, modulus })}
+            aria-label="1 つ戻す"
+          >
+            ← 戻す
           </button>
           <p className="attempts">
             試した鍵 <strong>{triedCount}</strong> / {modulus}
           </p>
-          <button type="button" onClick={() => dispatch({ type: 'move', delta: 1, modulus })} aria-label="1 つ進める">
-            →
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => dispatch({ type: 'move', delta: 1, modulus })}
+            aria-label="1 つ進める"
+          >
+            進める →
           </button>
         </div>
-        <ol className="dots" aria-label="試した鍵">
-          {labels.map((label, i) => (
-            <li key={label} className={`dot${state.tried.has(i) ? ' tried' : ''}${i === k ? ' current' : ''}`} />
-          ))}
-        </ol>
       </section>
-      <section className="tool-text" aria-label="暗号文と戻した文">
+      <section className="tool-text paper" aria-label="暗号文と戻した文">
+        <p className="paper-head">電文 ・ 傍受 22:14 ・ 発信元 不明</p>
         <div className="words">
           {pairs.map((pair, i) => (
             <div key={i} className="word">
-              <span className="word-cipher">{pair.cipher}</span>
-              <span className="word-restored">{pair.restored}</span>
+              <WordRow className="word-cipher" text={pair.cipher} />
+              <WordRow className="word-restored" text={pair.restored} />
             </div>
           ))}
         </div>
-        <p className="words-legend">上段が暗号文、下段が今のずらし量で戻した文</p>
+        <p className="paper-note">上段が暗号文、下段が今のずらし量で戻した文</p>
       </section>
     </div>
   );

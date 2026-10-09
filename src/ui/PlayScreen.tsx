@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import type { Puzzle, Stage } from '../stages/types';
 import { ToolHost } from '../tools/ToolHost';
 import { fillHint, isCorrect } from './logic';
+import { RECORD_NO } from './record';
 import { useIdleTimeout } from './useIdleTimeout';
 
 /** 解読画面で無操作が続いたら待機へ戻すまでの時間 */
@@ -43,14 +44,15 @@ export function PlayScreen({ stage, puzzle, onSolved, onRestart }: PlayScreenPro
   return (
     <main className="screen play">
       <header className="play-head">
-        <div>
-          <p className="stage-title">{stage.title}</p>
-          <p className="flavor">{stage.flavor}</p>
-        </div>
+        <p className="record">
+          傍受記録 {RECORD_NO} ・ {stage.title}
+        </p>
         <button type="button" className="secondary" onClick={onRestart}>
           最初から
         </button>
       </header>
+
+      <p className="flavor">{stage.flavor}</p>
 
       {stage.tools.map((mount) => (
         <ToolHost
@@ -73,26 +75,27 @@ export function PlayScreen({ stage, puzzle, onSolved, onRestart }: PlayScreenPro
 
       <section className="hints" aria-label="ヒント">
         {stage.hints.map((hint, i) => {
-          const label = `ヒント ${i + 1}`;
           if (i < openedHints) {
             return (
-              <p key={label} className="hint opened">
-                <span className="hint-label">{label}</span>
-                {fillHint(hint.body, puzzle.keyLabel)}
-              </p>
+              <div key={hint.label} className="hint opened">
+                <p className="hint-label">{hint.label}</p>
+                <p className="hint-body">{fillHint(hint.body, puzzle.keyLabel)}</p>
+              </div>
             );
           }
           if (i === openedHints) {
             return (
-              <button key={label} type="button" className="hint ready" onClick={() => setOpenedHints(i + 1)}>
-                {label}を見る
+              <button key={hint.label} type="button" className="hint ready" onClick={() => setOpenedHints(i + 1)}>
+                <span className="hint-label">{hint.label}</span>
+                <span className="hint-body">クリックで開く</span>
               </button>
             );
           }
           return (
-            <p key={label} className="hint locked">
-              {label}（前のヒントを見ると開く）
-            </p>
+            <div key={hint.label} className="hint locked" aria-disabled="true">
+              <p className="hint-label">{hint.label}</p>
+              <p className="hint-body">前を開くと読める</p>
+            </div>
           );
         })}
       </section>

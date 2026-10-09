@@ -43,23 +43,24 @@ export const caesarStage: Stage = {
   givens: [],
   tools: [{ id: 'modular-clock', modulus: 26 }],
   hints: [
-    { body: '鍵の候補は何通りある? 全部試せる数だろうか' },
+    { label: '手がかり', body: '鍵の候補は何通りある? 全部試せる数だろうか' },
     {
+      label: '仕組み',
       body:
         '文字を A=0, B=1, …, Z=25 の数に直し、鍵の数だけ足して 26 で割った余りをとる暗号。'
         + '鍵はずらし量ひとつだけ',
     },
-    { body: '鍵は {key}。円盤を {key} に合わせて「これで解読」を押す' },
+    { label: '答え', body: '鍵は {key}。円盤を {key} に合わせて「これで解読」を押す' },
   ],
   clear: {
     normalize: { ignoreCase: true, ignoreWhitespace: true, ignorePunctuation: true },
   },
   debrief: {
-    lesson: '鍵が 26 通りしかない暗号は、全部試せば必ず破れる。',
-    contrast:
-      '文字の対応をバラバラに並べ替える暗号なら、鍵は 26! ≈ 4×10²⁶ 通り。'
-      + '1 秒に 1 億通り試しても約 1,300 億年かかる。',
-    closing: 'だから暗号には、もっと賢い仕組み（代数）が要る。',
+    rivalName: '並べ替え暗号',
+    // 26! を桁のまま見せる（指数表記にしない。EXHIBITION.md「クリア画面」）
+    rivalKeys: '403,291,461,126,605,635,584,000,000',
+    rivalDuration: '1 秒に 1 億通り試しても 約 1,300 億年',
+    closing: 'だから暗号には、もっと賢い仕組み（代数）が要る',
   },
   generate(random: () => number): Puzzle {
     const key = KEY_MIN + randomInt(random, KEY_MAX - KEY_MIN + 1);

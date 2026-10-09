@@ -30,7 +30,7 @@ export function App() {
 
   switch (phase.kind) {
     case 'idle':
-      return <IdleScreen onStart={start} />;
+      return <IdleScreen stage={stage} onStart={start} />;
     case 'play':
       return (
         <PlayScreen

@@ -1,19 +1,30 @@
 /*
- * 展示用の画面（EXHIBITION.md）。1920×1080 を基準に、1366×768 でもスクロールなしで収める。
- * PC 室の全画面表示用なので、配色はライト固定。システムフォントのみ使い、外部リソースは参照しない。
- * アクセント色は 1 色（--accent）だけ。
+ * 展示用の画面（EXHIBITION.md「見た目」）。夜の解読室の机に、傍受した電文（紙）が置かれている見立て。
+ * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
+ * システムフォントのみ使い、外部リソースは参照しない。
+ * 色の約束: 朱（--accent）は 主ボタン・円盤の読み取り窓・判子・円盤の現在の鍵の目盛り・開いたヒントのカード名 にだけ使う。
+ * 平面的に描く（グラデーション・影・発光を使わない）。
  */
 :root {
-  color-scheme: light;
-  --bg: #f6f4ef;
-  --panel: #ffffff;
-  --ink: #1d2433;
-  --muted: #667085;
-  --line: #c9ceda;
-  --accent: #1b5fc1;
-  --radius: 8px;
-  --sans: system-ui, 'Yu Gothic UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  --mono: ui-monospace, 'Cascadia Mono', Consolas, 'SFMono-Regular', Menlo, 'Courier New', monospace;
+  color-scheme: dark;
+  /* 机の上 */
+  --bg: #14202e;
+  --ink: #e9e1cc;
+  --sub: #8fa3b8;
+  --line: #3a4d63;
+  --disc: #101a26;
+  --plate: #1f3247;
+  --tick-off: #33465b;
+  /* 紙（電文） */
+  --paper: #f3ecdc;
+  --paper-ink: #1d1d1b;
+  --paper-sub: #7a7363;
+  --paper-faint: #9a917e;
+  --paper-rule: #c9bfa8;
+  /* 朱（唯一の色） */
+  --accent: #d6452b;
+  --sans: 'Yu Gothic UI', 'Hiragino Sans', system-ui, sans-serif;
+  --mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
   /* 1366px で約 19px、1920px で約 22px */
   font-size: clamp(18px, calc(0.6vw + 11px), 23px);
   font-family: var(--sans);
@@ -40,40 +51,42 @@ body {
 
 p,
 h1,
-ol {
+ol,
+dl,
+dd {
   margin: 0;
+}
+
+.mono {
+  font-family: var(--mono);
 }
 
 button {
   font: inherit;
-  color: inherit;
+  color: var(--ink);
   cursor: pointer;
   min-height: 44px;
-  padding: 0.4em 1.2em;
+  padding: 0.35em 1.1em;
   border: 2px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel);
+  border-radius: 6px;
+  background: transparent;
+}
+
+button:hover {
+  border-color: var(--sub);
 }
 
 button:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
 
 button.primary {
-  color: #fff;
+  color: var(--paper);
   background: var(--accent);
   border-color: var(--accent);
   font-weight: 700;
-  padding: 0.5em 2em;
-}
-
-button.primary:hover {
-  filter: brightness(1.08);
-}
-
-button.secondary {
-  color: var(--muted);
+  padding: 0.45em 2em;
 }
 
 .screen {
@@ -81,6 +94,29 @@ button.secondary {
   height: 100dvh;
   padding: 3vh 3vw;
   overflow: hidden;
+}
+
+/* ---- 紙（電文） ---- */
+
+.paper {
+  color: var(--paper-ink);
+  background: var(--paper);
+  border-radius: 3px;
+  padding: 1.6vh 1.6vw;
+}
+
+.paper-head {
+  font: 0.8rem/1.4 var(--mono);
+  color: var(--paper-sub);
+  padding-bottom: 0.5em;
+  margin-bottom: 1.2vh;
+  border-bottom: 1px dashed var(--paper-rule);
+}
+
+.paper-note {
+  margin-top: 1vh;
+  font-size: 0.75rem;
+  color: var(--paper-sub);
 }
 
 /* ---- 円盤 ---- */
@@ -92,42 +128,60 @@ button.secondary {
   aspect-ratio: 1;
 }
 
-.dial-outer-ring {
-  fill: var(--panel);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-
-.dial-inner-ring {
-  fill: #e8eefb;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-
-.dial-hub {
-  fill: var(--panel);
+.dial-disc {
+  fill: var(--disc);
   stroke: var(--line);
   stroke-width: 1;
 }
 
+.dial-tick {
+  stroke: var(--tick-off);
+  stroke-width: 2.4;
+}
+
+.dial-tick.tried {
+  stroke: var(--ink);
+}
+
+.dial-tick.current {
+  stroke: var(--accent);
+  stroke-width: 3.4;
+}
+
 .dial-outer-letter {
-  font: 700 13px var(--mono);
-  fill: var(--ink);
+  font: 13px var(--mono);
+  fill: var(--sub);
+}
+
+.dial-plate {
+  fill: var(--plate);
 }
 
 .dial-inner-letter {
-  font: 700 12px var(--mono);
-  fill: var(--accent);
+  font: 700 14px var(--mono);
+  fill: var(--paper);
+}
+
+.dial-hub {
+  fill: var(--bg);
+  stroke: var(--line);
+  stroke-width: 1;
 }
 
 .dial-hub-label {
   font: 8px var(--sans);
-  fill: var(--muted);
+  fill: var(--sub);
 }
 
 .dial-hub-value {
-  font: 700 32px var(--mono);
+  font: 700 34px var(--mono);
   fill: var(--ink);
+}
+
+.dial-window {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
 }
 
 .dial-inner {
@@ -140,12 +194,12 @@ button.secondary {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6vw;
+  gap: 5vw;
   cursor: pointer;
 }
 
 .idle-dial {
-  width: min(70vh, 40vw);
+  width: min(84vh, 48vw);
   flex: none;
 }
 
@@ -163,40 +217,63 @@ button.secondary {
   }
 }
 
+.idle-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.record {
+  font: 1rem/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  color: var(--sub);
+}
+
 .title {
-  font-size: 5rem;
+  margin-top: 0.4vh;
+  font-size: 6rem;
   line-height: 1.1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .subtitle {
   font-size: 1.6rem;
-  color: var(--muted);
+  color: var(--sub);
 }
 
-.tagline {
-  margin-top: 2.5rem;
-  font-size: 1.5rem;
+.idle-paper {
+  margin-top: 4vh;
+  padding: 1.4vh 1.4vw;
+}
+
+.idle-teaser {
+  font: 700 1.4rem/1.5 var(--mono);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .cta {
-  display: inline-block;
-  margin-top: 2rem;
-  padding: 0.5em 2em;
-  color: #fff;
+  margin-top: 4vh;
+  padding: 0.45em 2em;
+  color: var(--paper);
   background: var(--accent);
-  border-radius: var(--radius);
+  border-radius: 6px;
+  font-size: 1.4rem;
   font-weight: 700;
+}
+
+.cta-note {
+  margin-top: 1.2vh;
+  color: var(--sub);
 }
 
 /* ---- 解読画面 ---- */
 
 .play {
-  --dial: min(52vh, 40vw, 560px);
+  --dial: min(70vh, 44vw);
   display: grid;
   grid-template-columns: var(--dial) minmax(0, 1fr);
-  grid-template-rows: auto auto auto 1fr;
-  align-content: start;
+  grid-template-rows: auto auto auto auto 1fr;
   column-gap: 3vw;
   row-gap: 1.2vh;
 }
@@ -204,19 +281,22 @@ button.secondary {
 .play-head {
   grid-column: 1 / -1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 2rem;
 }
 
-.stage-title {
-  font-size: 0.85rem;
-  color: var(--accent);
-  font-weight: 700;
+.play-head .record {
+  font-size: 1.1rem;
+  color: var(--ink);
 }
 
 .flavor {
-  max-width: 48em;
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--sub);
 }
 
 /* ツールの根はグリッドの項目を直接並べるため、箱を作らない */
@@ -226,7 +306,8 @@ button.secondary {
 
 .tool-dial {
   grid-column: 1;
-  grid-row: 2 / span 3;
+  grid-row: 2 / span 4;
+  align-self: start;
 }
 
 .dial-wrap {
@@ -239,91 +320,77 @@ button.secondary {
   cursor: grabbing;
 }
 
+.dial-window-note {
+  margin-top: 0.4vh;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.dial-window-note strong {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
 .dial-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.8rem;
+  justify-content: center;
   margin-top: 0.8vh;
 }
 
-.dial-controls button {
-  min-width: 3.2em;
-  font-weight: 700;
-}
-
 .attempts {
-  font-size: 1.1rem;
+  margin: 0 0.6rem;
+  font-size: 1.05rem;
+  color: var(--sub);
 }
 
 .attempts strong {
   font-size: 1.5rem;
-  color: var(--accent);
-}
-
-.dots {
-  display: flex;
-  justify-content: space-between;
-  padding: 0;
-  margin-top: 1vh;
-  list-style: none;
-}
-
-.dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border: 2px solid var(--line);
-  border-radius: 50%;
-}
-
-.dot.tried {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.dot.current {
-  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ink);
+  color: var(--ink);
 }
 
 .tool-text {
   grid-column: 2;
-  grid-row: 2;
-  padding: 1.2vh 1.5vw;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  grid-row: 3;
 }
 
 .words {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.6vh 1.4rem;
+  gap: 1.2vh 1.6rem;
 }
 
+/* 1 文字を同じ幅のセルに入れ、上段と下段で文字が縦に揃うようにする */
 .word {
+  --cell: 1.15rem;
   display: flex;
   flex-direction: column;
-  font: 700 1.3rem/1.5 var(--mono);
-  letter-spacing: 0.12em;
+  font-family: var(--mono);
+}
+
+.word .cell {
+  display: inline-block;
+  width: var(--cell);
+  text-align: center;
 }
 
 .word-cipher {
-  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--paper-faint);
 }
 
 .word-restored {
-  color: var(--ink);
-  border-top: 1px solid var(--line);
-}
-
-.words-legend {
-  margin-top: 1vh;
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 1.6rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--paper-ink);
 }
 
 .play-actions {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 4;
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -336,91 +403,176 @@ button.secondary {
 
 .hints {
   grid-column: 2;
-  grid-row: 4;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8vh;
+  grid-row: 5;
+  align-self: start;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 
 .hint {
+  display: block;
   margin: 0;
+  padding: 0.55em 0.8em;
   text-align: left;
-}
-
-.hint.ready {
-  align-self: flex-start;
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.hint.opened {
-  padding: 0.5vh 1rem;
-  border-left: 4px solid var(--accent);
-  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  min-height: 6.2rem;
 }
 
 .hint-label {
-  margin-right: 1rem;
+  display: block;
   font-weight: 700;
+  line-height: 1.4;
+}
+
+.hint-body {
+  display: block;
+  margin-top: 0.2em;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.hint.opened {
+  background: var(--plate);
+  border-color: var(--plate);
+}
+
+.hint.opened .hint-label {
   color: var(--accent);
 }
 
+.hint.opened .hint-body {
+  font-size: 1rem;
+}
+
+.hint.ready .hint-body {
+  color: var(--sub);
+}
+
 .hint.locked {
-  padding: 0.5vh 0;
-  font-size: 0.9rem;
-  color: var(--muted);
+  color: var(--sub);
+  opacity: 0.55;
 }
 
 /* ---- クリア画面 ---- */
 
 .clear {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 1.6vh;
-  text-align: center;
+  column-gap: 5vw;
 }
 
-.clear-title {
-  font-size: 3.2rem;
-  color: var(--accent);
+.clear-paper {
+  position: relative;
+  padding: 3vh 2.4vw 14vh;
 }
 
 .clear-plain {
-  font: 700 1.6rem/1.5 var(--mono);
-  letter-spacing: 0.1em;
+  font: 700 1.7rem/1.5 var(--mono);
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
 }
 
 .clear-translation {
-  font-size: 1.6rem;
+  margin-top: 1.6vh;
+  font-size: 1.3rem;
+  color: var(--paper-sub);
+}
+
+.stamp {
+  position: absolute;
+  right: 2vw;
+  bottom: 2.5vh;
+  padding: 0.05em 0.5em 0.05em 0.7em;
+  color: var(--accent);
+  border: 4px solid var(--accent);
+  border-radius: 6px;
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.2em;
+  transform: rotate(-10deg);
+  animation: stamp-down 0.2s ease-in 0.25s backwards;
+}
+
+@keyframes stamp-down {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) scale(1.6);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-10deg) scale(1);
+  }
+}
+
+.clear-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.clear-count-sub {
+  font-size: 1.4rem;
+  color: var(--sub);
 }
 
 .clear-count {
-  font-size: 1.2rem;
-  color: var(--muted);
+  font-size: 1.8rem;
+  line-height: 1.2;
 }
 
 .clear-count strong {
-  font-size: 1.8rem;
-  color: var(--ink);
+  font: 700 5.5rem/1.1 var(--mono);
+  margin-right: 0.15em;
 }
 
-.debrief {
-  max-width: 44em;
-  padding: 2vh 2vw;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  text-align: left;
+.versus {
+  width: 100%;
+  margin-top: 3vh;
+  padding-top: 2vh;
+  border-top: 1px solid var(--line);
 }
 
-.debrief p + p {
-  margin-top: 0.6em;
+.versus-row + .versus-row {
+  margin-top: 2vh;
 }
 
-.lesson {
+.versus dt {
+  font-size: 0.9rem;
+  color: var(--sub);
+}
+
+.versus dd.mono {
+  font-size: 1.2rem;
   font-weight: 700;
+  line-height: 1.4;
+}
+
+.versus dd.wrap {
+  overflow-wrap: anywhere;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.duration {
+  margin-top: 0.3em;
+  font-size: 1.1rem;
+}
+
+.closing {
+  margin-top: 3vh;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.clear .primary {
+  margin-top: 3vh;
+  font-size: 1.2rem;
 }
 
 /* ---- 動きを減らす設定 ---- */
@@ -432,5 +584,9 @@ button.secondary {
 
   .dial-inner {
     transition: none;
+  }
+
+  .stamp {
+    animation: none;
   }
 }

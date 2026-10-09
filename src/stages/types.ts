@@ -23,11 +23,13 @@ export interface Given {
 /**
  * ヒント 1 段ぶん。
  *
- * 3 段の順序と役割（手がかり → 構造の開示 → 解答の提示）は全ステージで固定なので、
- * 段の名前はデータに持たせず、ランナー側の定数とする（DESIGN.md §3）。
+ * 3 段の順序と役割（手がかり → 構造の開示 → 解答の提示）は全ステージで固定（DESIGN.md §3）。
+ * カードに出す名前（label）は、簡易版ではステージのデータに持たせる。
  * body には `{key}` を書ける。ランナーが Puzzle.keyLabel で置き換える。
  */
 export interface Hint {
+  /** カードの名前（例: 手がかり・仕組み・答え） */
+  readonly label: string;
   readonly body: string;
 }
 
@@ -59,13 +61,18 @@ export interface Puzzle {
   readonly keyLabel: string;
 }
 
-/** クリア画面で見せる締めくくりの文章（簡易版） */
+/**
+ * クリア画面の「強い暗号との対比」（簡易版）。
+ * 解読した側の鍵の数は、ステージ名と時計盤が返す総数（total）から画面が作るので、ここには持たない。
+ */
 export interface Debrief {
-  /** 教訓 */
-  readonly lesson: string;
-  /** 強い暗号との対比 */
-  readonly contrast: string;
-  /** 対比の締めの一言 */
+  /** 比較対象の暗号の名前（例: 並べ替え暗号） */
+  readonly rivalName: string;
+  /** 比較対象の鍵の数。桁をそのまま見せる文字列（例: 403,291,…） */
+  readonly rivalKeys: string;
+  /** 全部試すのにかかる時間の文（例: 1 秒に 1 億通り試しても 約 1,300 億年） */
+  readonly rivalDuration: string;
+  /** 締めの一言 */
   readonly closing: string;
 }
 

@@ -59,4 +59,8 @@ describe('caesarStage.generate', () => {
     expect(caesarStage.hints).toHaveLength(3);
     expect(caesarStage.hints[2].body).toContain('{key}');
   });
+
+  it('ヒントのカード名は 手がかり・仕組み・答え の順', () => {
+    expect(caesarStage.hints.map((h) => h.label)).toEqual(['手がかり', '仕組み', '答え']);
+  });
 });
