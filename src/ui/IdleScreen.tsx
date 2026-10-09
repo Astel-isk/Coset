@@ -41,7 +41,7 @@ export function IdleScreen({ game, onStart }: IdleScreenProps) {
       <div className="idle-body">
         <p className="record">傍受記録 {game.record.no}</p>
         <h1 className="title">Coset</h1>
-        <p className="subtitle">暗号解読官の代数</p>
+        <p className="subtitle">総当たりから代数へ</p>
         <div className="paper idle-paper" aria-hidden="true">
           <p className="idle-teaser">{teaser}</p>
         </div>
