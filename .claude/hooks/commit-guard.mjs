@@ -90,9 +90,18 @@ function main() {
   if (typeof command !== 'string') pass();
   // `git commit` 以外(git log --grep commit など)を巻き込まないよう、
   // サブコマンド位置の commit だけを対象にする。
-  if (!/\bgit\s+(-[^\s]+\s+|--[^\s]+(=[^\s]+)?\s+)*commit\b/.test(command)) pass();
+  // `-C <path>` / `-c <key=value>` は引数を別の語に取るので、その引数ごと読み飛ばす。
+  const ARG = `(?:"[^"]*"|'[^']*'|[^\\s]+)`;
+  const COMMIT_RE = new RegExp(
+    `\\bgit\\s+((?:-[Cc]\\s+${ARG}\\s+|-[^\\s]+\\s+|--[^\\s]+(?:=[^\\s]+)?\\s+)*)commit\\b`,
+  );
+  const commitMatch = command.match(COMMIT_RE);
+  if (!commitMatch) pass();
 
-  const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  // `git -C <path> commit` では、staged を読む場所もその path にする
+  const dirMatch = (commitMatch[1] ?? '').match(new RegExp(`-C\\s+(${ARG})`));
+  const dirArg = dirMatch?.[1]?.replace(/^["']|["']$/g, '');
+  const cwd = dirArg || process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
   // 1. 接頭辞
   const message = extractMessage(command);
