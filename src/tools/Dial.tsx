@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { innerIndexAt } from './mapping';
 
 /** 目盛りの状態表示。解読画面だけが渡す（待機画面の円盤は渡さず、目盛りは無印で描く） */
 export interface DialMarks {
@@ -22,6 +23,11 @@ interface DialProps {
    * 1 枚だけのときは省く（常に操作対象）
    */
   readonly active?: boolean;
+  /**
+   * 朱で光らせる外周の添字（電文の文字に重ねたとき。省けば光らせない）。
+   * その外周の文字と、同じ角度にある内周の文字を、中心から放射状の朱の帯で結ぶ
+   */
+  readonly highlight?: number;
   /** 円盤の中央に重ねる SVG 要素 */
   readonly children?: ReactNode;
 }
@@ -35,6 +41,8 @@ const HUB_R = 46;
 const TICK_FROM = 113;
 const TICK_TO = 121;
 const VIEW = 126;
+/** 光らせる帯の半幅（外周・内周の文字の幅より少し広い） */
+const BAND_HALF = 9;
 
 /**
  * 二重リングの円盤（表示だけ。操作は持たない）。
@@ -42,7 +50,7 @@ const VIEW = 126;
  * 内周を k 目盛り回すと、外周の文字 X の内側に X−k の文字が来る。
  * 外周の外の目盛りのうち、鍵 k の目盛りは外周の文字 A+k（添字 k の文字）と同じ向きに置く。
  */
-export function Dial({ labels, steps, marks, showWindow = false, active = true, children }: DialProps) {
+export function Dial({ labels, steps, marks, showWindow = false, active = true, highlight, children }: DialProps) {
   const n = labels.length;
   const stepDeg = 360 / n;
   return (
@@ -92,6 +100,36 @@ export function Dial({ labels, steps, marks, showWindow = false, active = true, 
           </text>
         ))}
       </g>
+      {highlight !== undefined && highlight >= 0 && highlight < n ? (
+        <g className="dial-hl" data-outer={labels[highlight]} transform={`rotate(${highlight * stepDeg})`}>
+          <rect
+            className="dial-hl-band"
+            x={-BAND_HALF}
+            y={-(OUTER_R + BAND_HALF)}
+            width={BAND_HALF * 2}
+            height={OUTER_R - INNER_R + BAND_HALF * 2}
+            rx={5}
+          />
+          <text
+            className="dial-hl-letter"
+            data-ring="outer"
+            transform={`translate(0 ${-OUTER_R})`}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
+            {labels[highlight]}
+          </text>
+          <text
+            className="dial-hl-letter"
+            data-ring="inner"
+            transform={`translate(0 ${-INNER_R})`}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
+            {labels[innerIndexAt(highlight, steps, n)]}
+          </text>
+        </g>
+      ) : null}
       <circle className="dial-hub" r={HUB_R} />
       {children}
       {showWindow && <rect className={active ? 'dial-window' : 'dial-window off'} x={-11} y={-104} width={22} height={48} rx={5} />}

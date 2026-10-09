@@ -2,7 +2,8 @@
  * 展示用の画面（EXHIBITION.md「見た目」）。夜の解読室の机に、傍受した電文（紙）が置かれている見立て。
  * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
  * システムフォントのみ使い、外部リソースは参照しない。
- * 色の約束: 朱（--accent）は 主ボタン・円盤の読み取り窓・判子・円盤の現在の鍵の目盛り・開いたヒントのカード名 にだけ使う。
+ * 色の約束: 朱（--accent）は 主ボタン・円盤の読み取り窓・判子・円盤の現在の鍵の目盛り・開いたヒントのカード名・
+ * 対応表の A の列の枠・電文の文字に重ねたときの強調（電文・対応表・円盤） にだけ使う。
  * 平面的に描く（グラデーション・影・発光を使わない）。
  */
 :root {
@@ -104,10 +105,14 @@ button.primary {
   color: var(--paper-ink);
   background: var(--paper);
   border-radius: 3px;
-  padding: 1.6vh 1.6vw;
+  padding: 1.2vh 1.6vw;
 }
 
 .paper-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
   font: 0.8rem/1.4 var(--mono);
   color: var(--paper-sub);
   padding-bottom: 0.5em;
@@ -116,8 +121,8 @@ button.primary {
 }
 
 .paper-note {
-  margin-top: 1vh;
   font-size: 0.75rem;
+  font-family: var(--sans);
   color: var(--paper-sub);
 }
 
@@ -188,6 +193,16 @@ button.primary {
 
 .dial-inner {
   transition: transform 0.18s ease-out;
+}
+
+/* 電文の文字に重ねたときの強調: 外周と内周の同じ角度の文字を、朱の帯で結ぶ */
+.dial-hl-band {
+  fill: var(--accent);
+}
+
+.dial-hl-letter {
+  font: 700 14px var(--mono);
+  fill: #fff;
 }
 
 /* ---- 待機画面 ---- */
@@ -325,9 +340,10 @@ button.primary {
   --dial: min(70vh, 44vw);
   display: grid;
   grid-template-columns: var(--dial) minmax(0, 1fr);
-  grid-template-rows: auto auto auto auto 1fr;
+  grid-template-rows: auto auto auto auto auto 1fr;
   column-gap: 3vw;
-  row-gap: 1.2vh;
+  row-gap: 0.9vh;
+  padding-block: 2.2vh;
 }
 
 .play-head {
@@ -358,7 +374,7 @@ button.primary {
 
 .tool-dial {
   grid-column: 1;
-  grid-row: 2 / span 4;
+  grid-row: 2 / span 5;
   align-self: start;
 }
 
@@ -372,15 +388,123 @@ button.primary {
   cursor: grabbing;
 }
 
-.dial-window-note {
-  margin-top: 0.4vh;
-  text-align: center;
-  font-size: 1.1rem;
+/* 輪の名札: 外側・内側が何の文字かを、各輪の文字色の色見本で示す */
+.dial-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.6rem;
+  margin-top: 0.6vh;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
-.dial-window-note strong {
-  font-size: 1.6rem;
-  line-height: 1;
+.legend-item {
+  white-space: nowrap;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.45em;
+}
+
+.swatch-outer {
+  background: var(--sub);
+}
+
+.swatch-inner {
+  background: var(--paper);
+}
+
+/* 対応表: 円盤を切り開いて伸ばした 2 行 × 26 列。電文に出る文字の列は明るく太く、使われない列は暗く */
+.mapping {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: end;
+  min-width: 0;
+}
+
+.mapping-title {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--sub);
+}
+
+.mapping-grid {
+  --map-col: minmax(0, 1fr);
+  display: grid;
+  grid-template-columns: auto repeat(var(--cols), var(--map-col));
+  font-family: var(--mono);
+}
+
+.map-head {
+  align-self: center;
+  padding-right: 0.6rem;
+  font: 0.7rem/1 var(--sans);
+  white-space: nowrap;
+  color: var(--sub);
+}
+
+/* 枠は透明で全セルに取り、A の列だけ朱にする（列の幅・行の高さが動かない） */
+.map-cell {
+  border: 2px solid transparent;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.map-cell.unused {
+  color: var(--window-off);
+}
+
+.map-cell.used {
+  font-weight: 700;
+  background: var(--plate);
+}
+
+.map-top.used {
+  color: var(--sub);
+}
+
+.map-bottom.used {
+  color: var(--paper);
+}
+
+.map-cell.map-a {
+  border-left-color: var(--accent);
+  border-right-color: var(--accent);
+}
+
+.map-top.map-a {
+  border-top-color: var(--accent);
+}
+
+.map-bottom.map-a {
+  border-bottom-color: var(--accent);
+}
+
+.map-cell.hl {
+  color: #fff;
+  font-weight: 700;
+  background: var(--accent);
+}
+
+.hover-note {
+  margin-top: 0.6vh;
+  min-height: 1.4em;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--paper-faint);
+}
+
+.hover-note.on {
+  color: var(--paper-ink);
+}
+
+.hover-note strong {
+  font-weight: 700;
 }
 
 .dial-controls {
@@ -404,18 +528,18 @@ button.primary {
 
 .tool-text {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 4;
 }
 
 .words {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.2vh 1.6rem;
+  gap: 0.8vh 1.6rem;
 }
 
 /* 1 文字を同じ幅のセルに入れ、上段と下段で文字が縦に揃うようにする */
 .word {
-  --cell: 1.15rem;
+  --cell: 1.05rem;
   display: flex;
   flex-direction: column;
   font-family: var(--mono);
@@ -435,14 +559,14 @@ button.primary {
 
 .word-restored {
   font-size: 1.6rem;
-  line-height: 1.3;
+  line-height: 1.25;
   font-weight: 700;
   color: var(--paper-ink);
 }
 
 .play-actions {
   grid-column: 2;
-  grid-row: 4;
+  grid-row: 5;
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -455,7 +579,7 @@ button.primary {
 
 .hints {
   grid-column: 2;
-  grid-row: 5;
+  grid-row: 6;
   align-self: start;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -512,15 +636,16 @@ button.primary {
  * 方式ごとの分岐ではなく、ツールの ID（data-tool）で配置を切り替える。 */
 
 .play[data-tool='multi-clock'] {
-  --dial: min(36vh, 20.5vw);
+  --dial: min(max(28vh, calc(36vh - 60px)), 19vw);
   grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto auto;
   grid-template-areas:
     'head head'
     'dials flavor'
     'dials controls'
     'dials actions'
     'dials givens'
+    'map map'
     'paper paper'
     'hints hints';
 }
@@ -550,12 +675,18 @@ button.primary {
 
 .play[data-tool='multi-clock'] .feedback {
   flex-basis: 100%;
-  min-height: 3.2em;
+  min-height: 1.6em;
 }
 
 .play[data-tool='multi-clock'] .givens {
   grid-area: givens;
   align-self: end;
+}
+
+.play[data-tool='multi-clock'] .mapping {
+  grid-area: map;
+  --map-col: 1.7rem;
+  justify-self: start;
 }
 
 .play[data-tool='multi-clock'] .tool-text {
@@ -589,13 +720,9 @@ button.primary {
   border-color: var(--sub);
 }
 
-.multi-dial .dial-window-note {
-  margin-top: 0.2vh;
-  font-size: 0.85rem;
-}
-
-.multi-dial .dial-window-note strong {
-  font-size: 1.25rem;
+/* 輪の名札は 3 枚の下に 1 つ */
+.tool-dials .dial-legend {
+  grid-column: 1 / -1;
 }
 
 .multi-dial .attempts {
@@ -690,6 +817,13 @@ button.primary {
 
 .word-restored .cell.dim {
   color: #b9b09b;
+}
+
+/* 電文の文字に重ねたときの強調（上段・下段・番号行とも）。操作対象の濃淡より優先する */
+.words .word .cell.hl {
+  color: #fff;
+  background: var(--accent);
+  border-radius: 3px;
 }
 
 /* ---- クリア画面 ---- */

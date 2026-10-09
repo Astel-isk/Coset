@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useReducer, useRef } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
 import { decrypt } from '../stages/vigenereStub'; // core/ciphers/vigenere.ts の実装後にここを差し替える
-import { ALPHABET, mod, normalizeAngleDelta, pairWords } from './clock';
+import { ALPHABET, normalizeAngleDelta, pairWords } from './clock';
 import { Dial } from './Dial';
+import { highlightedCells, hoverTarget, outerIndexOf, plainLetterOf, usedCipherLetters } from './mapping';
+import type { CellPos } from './mapping';
+import { DialLegend, MappingStrip } from './MappingStrip';
 import { currentKeys, initialState, ownersOfWords, reducer, totalTried } from './multiState';
 import type { ToolProps } from './types';
 
@@ -17,6 +20,7 @@ function circled(index: number): string {
 /**
  * 1 語の 1 段。1 文字ずつ同じ幅のセルに入れ、上段と下段の字の大きさが違っても文字が縦に揃うようにする。
  * 操作対象の円盤が受け持つ文字を濃く（own）、他を薄く（dim）描く。
+ * 文字にマウスを重ねると onHover に位置を渡し（離れたら null）、lit の文字は朱で光らせる。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
 function OwnedRow({
@@ -24,17 +28,29 @@ function OwnedRow({
   cells,
   owners,
   active,
+  word,
+  lit,
+  onHover,
 }: {
   readonly className: string;
   /** 1 文字ずつの表示 */
   readonly cells: readonly string[];
   readonly owners: readonly (number | null)[];
   readonly active: number;
+  /** 語の番号 */
+  readonly word: number;
+  readonly lit: readonly boolean[];
+  readonly onHover: (pos: CellPos | null) => void;
 }) {
   return (
     <span className={className}>
       {cells.map((cell, i) => (
-        <span key={i} className={owners[i] === active ? 'cell own' : 'cell dim'}>
+        <span
+          key={i}
+          className={`${owners[i] === active ? 'cell own' : 'cell dim'}${lit[i] ? ' hl' : ''}`}
+          onMouseEnter={() => onHover({ word, index: i })}
+          onMouseLeave={() => onHover(null)}
+        >
           {cell}
         </span>
       ))}
@@ -69,6 +85,16 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
       ),
     [pairs, count, modulus],
   );
+  const labels = ALPHABET.slice(0, modulus).split('');
+  const cipherWords = useMemo(() => pairs.map((p) => p.cipher), [pairs]);
+
+  // 重ねている電文の文字。強調の状態は「暗号文の文字の位置」だけ持ち、
+  // 受け持つ円盤・鍵・表示は今の状態から毎回計算する（キーボードや回転中も追従する）
+  const [hover, setHover] = useState<CellPos | null>(null);
+  const target = useMemo(() => hoverTarget(cipherWords, owners, hover), [cipherWords, owners, hover]);
+  const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
+  // 対応表は操作対象の円盤の 1 本だけ。電文の出現は、その円盤が受け持つ位置の文字だけで判定する
+  const used = useMemo(() => usedCipherLetters(cipherWords, owners, state.active), [cipherWords, owners, state.active]);
   const triedCount = totalTried(state);
   const total = modulus * count;
   const active = state.active;
@@ -144,8 +170,6 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
     dragRef.current = null;
   };
 
-  const labels = ALPHABET.slice(0, modulus).split('');
-
   return (
     <div className="tool tool-multi">
       <section ref={dialsRef} className="tool-dials" aria-label="円盤">
@@ -171,6 +195,7 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
                   marks={{ tried: state.tried[d] ?? new Set<number>(), current: k }}
                   showWindow
                   active={isActive}
+                  highlight={target && target.owner === d ? outerIndexOf(target.letter, modulus) : undefined}
                 >
                   <text className="dial-hub-label" textAnchor="middle" y={-17}>
                     {circled(d)} ずらし量
@@ -180,18 +205,13 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
                   </text>
                 </Dial>
               </div>
-              <p className="dial-window-note">
-                窓の中: 暗号の <span className="mono">{labels[0]}</span> は 平文の{' '}
-                <strong className="mono" data-testid="window-letter" data-dial={d + 1}>
-                  {labels[mod(-k, modulus)] ?? ''}
-                </strong>
-              </p>
               <p className="attempts" data-testid="attempts" data-dial={d + 1}>
                 {circled(d)} 試した鍵 <strong>{state.tried[d]?.size ?? 0}</strong> / {modulus}
               </p>
             </div>
           );
         })}
+        <DialLegend />
       </section>
       <div className="tool-controls">
         <button
@@ -214,6 +234,14 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
           進める →
         </button>
       </div>
+      <MappingStrip
+        title={`${circled(active)} の対応表`}
+        k={keys[active] ?? 0}
+        modulus={modulus}
+        used={used}
+        highlight={target && target.owner === active ? target.letter : null}
+        dial={active + 1}
+      />
       <section className="tool-text paper" aria-label="暗号文と戻した文">
         <p className="paper-head">{heading}</p>
         <div className="words">
@@ -226,23 +254,43 @@ export function MultiClock({ mount, ciphertext, heading, onCandidate, onAttempts
                   cells={pair.cipher.split('')}
                   owners={wordOwners}
                   active={active}
+                  word={i}
+                  lit={lit[i] ?? []}
+                  onHover={setHover}
                 />
                 <OwnedRow
                   className="word-restored"
                   cells={pair.restored.split('')}
                   owners={wordOwners}
                   active={active}
+                  word={i}
+                  lit={lit[i] ?? []}
+                  onHover={setHover}
                 />
                 <OwnedRow
                   className="word-owner"
                   cells={wordOwners.map((owner) => (owner === null ? '' : String(owner + 1)))}
                   owners={wordOwners}
                   active={active}
+                  word={i}
+                  lit={lit[i] ?? []}
+                  onHover={setHover}
                 />
               </div>
             );
           })}
         </div>
+        <p className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
+          {target ? (
+            <>
+              暗号文の <strong className="mono">{target.letter}</strong> は、{circled(target.owner)} の外側の{' '}
+              <strong className="mono">{target.letter}</strong> の内側にある{' '}
+              <strong className="mono">{plainLetterOf(target.letter, keys[target.owner] ?? 0, modulus)}</strong> に戻る
+            </>
+          ) : (
+            '電文の文字にマウスを重ねると、円盤の対応が光る'
+          )}
+        </p>
       </section>
     </div>
   );
