@@ -9,6 +9,8 @@ import { highlightedCells, hoverTarget, outerIndexOf, tapCell, usedCipherLetters
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { ownersOfWords } from './multiState';
+import { RestoredBar } from './RestoredBar';
+import { barSegments } from './barText';
 import { TurnButtons } from './TurnButtons';
 import type { ToolProps } from './types';
 
@@ -91,11 +93,13 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const compact = useCompactLayout();
   const dialRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{ last: number; acc: number; start: number } | null>(null);
 
   const k = mod(state.pos, modulus);
   const restored = useMemo(() => decrypt(ciphertext, k), [ciphertext, k]);
   const pairs = useMemo(() => pairWords(ciphertext, restored), [ciphertext, restored]);
+  const barSegs = useMemo(() => barSegments(pairs.map((p) => p.restored)), [pairs]);
   const triedCount = state.tried.size;
   const labels = ALPHABET.slice(0, modulus).split('');
 
@@ -216,7 +220,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
         used={used}
         highlight={target?.letter ?? null}
       />
-      <section className="tool-text paper" aria-label="暗号文と戻した文">
+      <section ref={paperRef} className="tool-text paper" aria-label="暗号文と戻した文">
         <p className="paper-head">
           <span>{heading}</span>
           <span className="paper-note">上段が暗号文、下段が今のずらし量で戻した文</span>
@@ -234,6 +238,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
         </p>
       </section>
       {actions}
+      {compact ? <RestoredBar paperRef={paperRef} segments={barSegs} /> : null}
     </div>
   );
 }

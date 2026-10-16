@@ -12,6 +12,8 @@ import { highlightedCells, hoverTarget, outerIndexOf, tapCell, usedCipherLetters
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { currentKeys, initialState, ownersOfWords, reducer, totalTried } from './multiState';
+import { RestoredBar } from './RestoredBar';
+import { barSegments } from './barText';
 import { TurnButtons } from './TurnButtons';
 import type { ToolProps } from './types';
 
@@ -94,6 +96,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
   const [state, dispatch] = useReducer(reducer, count, initialState);
   const compact = useCompactLayout();
   const dialsRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{ last: number; acc: number; start: number } | null>(null);
 
   const keys = useMemo(() => currentKeys(state, modulus), [state, modulus]);
@@ -109,6 +112,8 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
     [pairs, count, modulus],
   );
   const labels = ALPHABET.slice(0, modulus).split('');
+  // 戻した文の帯（スマホ版）。操作中の円盤が受け持つ文字を濃く、他を薄くする（電文と同じ規則）
+  const barSegs = useMemo(() => barSegments(pairs.map((p) => p.restored), owners, state.active), [pairs, owners, state.active]);
   const cipherWords = useMemo(() => pairs.map((p) => p.cipher), [pairs]);
 
   // 重ねている電文の文字。強調の状態は「暗号文の文字の位置」だけ持ち、
@@ -314,7 +319,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
         highlight={target && target.owner === active ? target.letter : null}
         dial={active + 1}
       />
-      <section className="tool-text paper" aria-label="暗号文と戻した文">
+      <section ref={paperRef} className="tool-text paper" aria-label="暗号文と戻した文">
         <p className="paper-head">
           <span>{heading}</span>
           <span className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
@@ -388,6 +393,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
         </div>
       </section>
       {actions}
+      {compact ? <RestoredBar paperRef={paperRef} segments={barSegs} /> : null}
     </div>
   );
 }

@@ -451,6 +451,13 @@ DESIGN.md §2 の「なぜ a は 26 と互いに素でないとダメか」を�
   - タップで光る: `tools/mapping.ts` の `tapCell(words, owners, current, tapped)`（光っている文字をもう一度タップで消す。同じ暗号文の文字かつ同じ円盤のどの出現でも消える）。
     スマホ版（compact）の電文の文字は `onMouseEnter/Leave` を付けず（タッチ端末はタップでマウスのイベントも合成し、二重に動くため）、`onClick` で `tapCell` を呼ぶ。
     最初の単語の列（ステージ 2・3）のタップは、列の選択（計算機への入力）と光る表示の設定を同時に行う（`onPick`）。もう一度タップで両方を解除する
+  - 戻した文の帯（`tools/RestoredBar.tsx`、純粋関数は `tools/barText.ts`）: 3 つのツールが compact のときだけ `<RestoredBar paperRef segments />` を描く（PC 版は一切描かない）。
+    `barSegments(words, owners?, active)` が今の鍵で戻した文（平文の段だけ。ステージ 3 の「?」もそのまま）を濃い・薄いの部分に分ける。
+    owners を渡すステージ 2 は、操作中の円盤が受け持つ文字を濃く、他を薄くする（電文の `own`／`dim` と同じ規則。語のあいだの空白は直前の文字と同じ濃さ）。ステージ 1・3 は全体が濃い 1 部分。
+    `RestoredBar` は電文の紙（`.tool-text`）を `IntersectionObserver` で監視し、`barVisible(intersecting, top)`（紙が画面に見えず、かつ上へ出ているとき true。紙が画面の下にあるときは出さない）で `.on` を付け外しする。
+    帯は常に DOM にあり、CSS（`index.css` スマホ版の末尾）が `position: fixed; top: 0`・背景は机の色で不透明・下に細い罫線・`pointer-events: none`（下の円盤・ボタンのタップを通す）・
+    等幅 0.95rem・最大 2 行（`-webkit-line-clamp: 2`、はみ出す分は …）・見出し「今の鍵で戻した文」を小さく添える。出し入れは 0.15 秒の opacity のフェード（`prefers-reduced-motion` では transition なしで切り替えだけ）。出ていないあいだは `visibility: hidden` と `aria-hidden`。
+    `html` の `scroll-padding-top: 4.6rem`（スマホ版）で、要素までスクロールしたときに帯の下へ隠れないようにする。
   - 対応表の折り返し: `MappingStrip`・`AffineStrip` が compact のとき `halves()`（`mapping.ts`）で 26 列を 13 列ずつの 2 つの `.mapping-grid` に分ける
   - ステージ 2（`MultiClock`）は compact のとき「① 鍵 0 / ② 鍵 0 / ③ 鍵 0」のタブ（`.dial-tab`）を出し、操作対象でない円盤は CSS で隠す。ステージ 3 の a のボタンは CSS の 5 × 5 の格子。
     配置は `data-tool` ごとの `grid-template-areas`（ステージ 1: 電文 → 対応表 → 円盤 → 主ボタン → ヒント。ステージ 2: 電文 → 与件 → 対応表 → 円盤 → 計算機 → …。ステージ 3: 電文 → 与件 → 対応表 → 鍵の選択 → 計算機 → …）で切り替える

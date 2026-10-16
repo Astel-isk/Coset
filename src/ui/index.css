@@ -2116,4 +2116,69 @@ button.b-btn {
     margin-top: 0.8rem;
     font-size: min(1.1rem, calc((100vw - 3.8rem) / 24.6));
   }
+
+  /* ---- 戻した文の帯（EXHIBITION.md「スマホ版」）----
+   * 電文の紙が画面の上へ流れて見えなくなったら、今の鍵で戻した文を画面の上端に固定して出す（JS が .on を付け外しする。tools/RestoredBar.tsx）。
+   * 背景は机の色で不透明、下に細い罫線。pointer-events: none なので、帯の下の円盤・ボタンのタップは通る。2 行まで、はみ出す分は … で省く。 */
+  html {
+    /* 要素までスクロールさせたとき（scrollIntoView・フォーカス）に、帯の下へ隠れないようにする */
+    scroll-padding-top: 4.6rem;
+  }
+
+  .restored-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    padding: 0.3rem max(0.9rem, calc((100% - 44rem) / 2 + 0.9rem)) 0.35rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.15s ease-out,
+      visibility 0s linear 0.15s;
+  }
+
+  .restored-bar.on {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.15s ease-out;
+  }
+
+  .restored-bar-label {
+    margin: 0;
+    font-size: 0.65rem;
+    line-height: 1.3;
+    color: var(--sub);
+  }
+
+  .restored-bar-text {
+    margin: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  /* ステージ 2: 操作中でない円盤が受け持つ文字は薄く（電文の .dim と同じ規則） */
+  .restored-bar-text .bar-dim {
+    color: var(--window-off);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .restored-bar,
+    .restored-bar.on {
+      transition: none;
+    }
+  }
 }

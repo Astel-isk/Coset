@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { AffineCalculator } from './AffineCalculator';
 import { AffineStrip } from './AffineStrip';
 import { hoverSentence, isInvertible, keyTotal, restoreText } from './affine';
@@ -10,6 +10,8 @@ import { pairWords } from './clock';
 import { highlightedCells, hoverTarget, tapCell, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { ownersOfWords } from './multiState';
+import { RestoredBar } from './RestoredBar';
+import { barSegments } from './barText';
 import type { ToolProps } from './types';
 
 /** 手がかりの段に並べる与件の id（stages/affine.ts の最初の単語。EXHIBITION.md「ステージ 3」） */
@@ -73,6 +75,7 @@ function Row({
 export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, onAttempts, actions }: ToolProps<'affine-table'>) {
   const { modulus } = mount;
   const compact = useCompactLayout();
+  const paperRef = useRef<HTMLElement>(null);
   const [state, dispatch] = useReducer(affineReducer, undefined, initialAffineState);
   const { a, b } = state;
   const invertible = isInvertible(a, modulus);
@@ -80,6 +83,7 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
   const restored = useMemo(() => restoreText(ciphertext, a, b, modulus), [ciphertext, a, b, modulus]);
   const pairs = useMemo(() => pairWords(ciphertext, restored), [ciphertext, restored]);
   const cipherWords = useMemo(() => pairs.map((p) => p.cipher), [pairs]);
+  const barSegs = useMemo(() => barSegments(pairs.map((p) => p.restored)), [pairs]);
   // 円盤は無いので、全文字が同じ持ち主（0）。重ねたときの強調は暗号文の文字だけで決まる
   const owners = useMemo(() => ownersOfWords(cipherWords, 1, modulus), [cipherWords, modulus]);
   const used = useMemo(() => usedCipherLetters(cipherWords, owners, 0), [cipherWords, owners]);
@@ -213,7 +217,7 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
         />
       ) : null}
       <AffineStrip a={a} b={b} modulus={modulus} used={used} highlight={target ? target.letter : null} />
-      <section className="tool-text paper" aria-label="暗号文と戻した文">
+      <section ref={paperRef} className="tool-text paper" aria-label="暗号文と戻した文">
         <p className="paper-head">
           <span>{heading}</span>
           <span className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
@@ -264,6 +268,7 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
         </div>
       </section>
       {actions}
+      {compact ? <RestoredBar paperRef={paperRef} segments={barSegs} /> : null}
     </div>
   );
 }
