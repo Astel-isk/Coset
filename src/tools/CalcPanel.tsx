@@ -1,3 +1,4 @@
+import { useCompactLayout } from '../layout';
 import type { CalcStep } from './calcSteps';
 import { currentStep } from './calcSteps';
 
@@ -28,6 +29,8 @@ interface CalcPanelProps {
 }
 
 const STEP_ONE = '電文の最初の単語から、手がかりと組になった列を 1 つクリック';
+/** スマホ版（タッチ操作）では「クリック」を「タップ」にする */
+const STEP_ONE_TOUCH = '電文の最初の単語から、手がかりと組になった列を 1 つタップ';
 
 /**
  * 鍵の計算機の表示（ステージ 2・3 共通）。見出し・目的・例と、番号付きの 3 手順
@@ -48,6 +51,7 @@ export function CalcPanel({
   onAlign,
   caution = '',
 }: CalcPanelProps) {
+  const compact = useCompactLayout();
   const step = currentStep(selected);
   const stepClass = (n: CalcStep) => (n === step ? 'calc-step now' : 'calc-step');
   const showFormula = selected && expression !== null;
@@ -59,7 +63,7 @@ export function CalcPanel({
       <ol className="calc-steps">
         <li className={stepClass(1)} data-step="1">
           <span className="step-no">1</span>
-          <span className="step-text">{STEP_ONE}</span>
+          <span className="step-text">{compact ? STEP_ONE_TOUCH : STEP_ONE}</span>
         </li>
         <li className={stepClass(2)} data-step="2">
           <span className="step-no">2</span>

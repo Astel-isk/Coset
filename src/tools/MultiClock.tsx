@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
+import { useCompactLayout } from '../layout';
 import { decrypt } from '../stages/vigenereStub'; // core/ciphers/vigenere.ts の実装後にここを差し替える
 import { ALPHABET, normalizeAngleDelta, pairWords } from './clock';
 import { Dial } from './Dial';
@@ -7,7 +8,7 @@ import { alignedMessage, columnClasses, columnPair, pickableColumns, toggleColum
 import type { ColumnPick } from './calcSteps';
 import { restoreSentence } from './formula';
 import { KeyCalculator } from './KeyCalculator';
-import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from './mapping';
+import { highlightedCells, hoverTarget, outerIndexOf, tapCell, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { currentKeys, initialState, ownersOfWords, reducer, totalTried } from './multiState';
@@ -31,6 +32,8 @@ function circled(index: number): string {
  * 文字にマウスを重ねると onHover に位置を渡し（離れたら null）、lit の文字は朱で光らせる。
  * column を渡した行（最初の単語の各段）は、手がかりのある列のクリックを列の番号で通知し、
  * 選んだ列は朱の塗り、マウスが乗った列は薄い地で示す（鍵の計算機への入力。重ねて光らせるのは強調で、クリックは入力）。
+ * スマホ版（compact）は、重ねる代わりにタップで光らせる（もう一度タップで消す）。手がかりのある列のタップは、計算機への入力と光る表示を同時に行う（列の onPick が両方を扱う）。
+ * タッチ端末はタップでマウスのイベントも合成するため、compact では onMouseEnter/Leave を付けない。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
 function OwnedRow({
@@ -41,6 +44,8 @@ function OwnedRow({
   word,
   lit,
   onHover,
+  onTap,
+  compact,
   column,
 }: {
   readonly className: string;
@@ -52,6 +57,8 @@ function OwnedRow({
   readonly word: number;
   readonly lit: readonly boolean[];
   readonly onHover: (pos: CellPos | null) => void;
+  readonly onTap: (pos: CellPos) => void;
+  readonly compact: boolean;
   readonly column?: ColumnPick;
 }) {
   return (
@@ -60,9 +67,11 @@ function OwnedRow({
         <span
           key={i}
           className={`${owners[i] === active ? 'cell own' : 'cell dim'}${lit[i] ? ' hl' : ''}${columnClasses(column, i)}`}
-          onMouseEnter={() => onHover({ word, index: i })}
-          onMouseLeave={() => onHover(null)}
-          onClick={column?.pickable[i] ? () => column.onPick(i) : undefined}
+          onMouseEnter={compact ? undefined : () => onHover({ word, index: i })}
+          onMouseLeave={compact ? undefined : () => onHover(null)}
+          onClick={
+            column?.pickable[i] ? () => column.onPick(i) : compact ? () => onTap({ word, index: i }) : undefined
+          }
         >
           {cell}
         </span>
@@ -83,6 +92,7 @@ function OwnedRow({
 export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, onAttempts, actions }: ToolProps<'multi-clock'>) {
   const { modulus, count } = mount;
   const [state, dispatch] = useReducer(reducer, count, initialState);
+  const compact = useCompactLayout();
   const dialsRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ last: number; acc: number; start: number } | null>(null);
 
@@ -106,6 +116,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
   const [hover, setHover] = useState<CellPos | null>(null);
   const target = useMemo(() => hoverTarget(cipherWords, owners, hover), [cipherWords, owners, hover]);
   const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
+  const onTap = (pos: CellPos) => setHover((cur) => tapCell(cipherWords, owners, cur, pos));
   // 対応表は操作対象の円盤の 1 本だけ。電文の出現は、その円盤が受け持つ位置の文字だけで判定する
   const used = useMemo(() => usedCipherLetters(cipherWords, owners, state.active), [cipherWords, owners, state.active]);
   // 鍵の計算機。電文の最初の単語の列を 1 回クリックすると、暗号文の文字と手がかりの文字の組が入る。
@@ -125,10 +136,13 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
       : {
           pickable,
           selected: selCol,
-          hovered: hover?.word === 0 ? hover.index : null,
+          hovered: !compact && hover?.word === 0 ? hover.index : null,
           onPick: (col) => {
-            setSelCol((cur) => toggleColumn(cur, col));
+            const next = toggleColumn(selCol, col);
+            setSelCol(next);
             setDone(null);
+            // スマホ版: 列のタップで、計算機への入力と光る表示を同時に行う（もう一度タップで両方消える）
+            if (compact) setHover(next === null ? null : { word: 0, index: col });
           },
         };
   const triedCount = totalTried(state);
@@ -209,6 +223,23 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
   return (
     <div className="tool tool-multi">
       <section ref={dialsRef} className="tool-dials" aria-label="円盤">
+        {compact ? (
+          // スマホ版: 円盤は 1 枚ずつ大きく出し、この切り替えで操作対象を選ぶ（鍵の今の値も添える）
+          <div className="dial-tabs" role="group" aria-label="円盤の切り替え">
+            {keys.map((k, d) => (
+              <button
+                key={d}
+                type="button"
+                aria-pressed={d === active}
+                className={d === active ? 'dial-tab active' : 'dial-tab'}
+                data-tab={d + 1}
+                onClick={() => dispatch({ type: 'select', dial: d })}
+              >
+                {circled(d)} 鍵 {k}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {keys.map((k, d) => {
           const isActive = d === active;
           return (
@@ -253,9 +284,11 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
         })}
       </section>
       <div className="tool-controls">
-        <p className="multi-target">
-          操作中 <strong>{circled(active)}</strong>
-        </p>
+        {compact ? null : (
+          <p className="multi-target">
+            操作中 <strong>{circled(active)}</strong>
+          </p>
+        )}
         <DialLegend grip />
       </div>
       {hintWord !== null ? (
@@ -287,7 +320,9 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
           <span className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
             {target
               ? restoreSentence(target.letter, keys[target.owner] ?? 0, modulus, circled(target.owner))
-              : '電文の文字にマウスを重ねると、円盤の対応が光る'}
+              : compact
+                ? '電文の文字をタップすると、円盤の対応が光る'
+                : '電文の文字にマウスを重ねると、円盤の対応が光る'}
           </span>
         </p>
         <div className="words">
@@ -305,6 +340,8 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  onTap={onTap}
+                  compact={compact}
                   column={column}
                 />
                 {column && hintWord !== null ? (
@@ -316,6 +353,8 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                     word={i}
                     lit={[]}
                     onHover={setHover}
+                    onTap={onTap}
+                    compact={compact}
                     column={column}
                   />
                 ) : null}
@@ -327,6 +366,8 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  onTap={onTap}
+                  compact={compact}
                   column={column}
                 />
                 <OwnedRow
@@ -337,6 +378,8 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  onTap={onTap}
+                  compact={compact}
                   column={column}
                 />
               </div>

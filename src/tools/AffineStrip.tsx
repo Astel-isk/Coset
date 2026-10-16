@@ -1,4 +1,6 @@
 import type { CSSProperties } from 'react';
+import { useCompactLayout } from '../layout';
+import { halves } from './mapping';
 import { affineColumns, clashExample, clashingColumns, clashWarning, isInvertible } from './affine';
 
 interface AffineStripProps {
@@ -16,8 +18,10 @@ interface AffineStripProps {
  * 対応表（暗号化の向き）: 上の行が平文の A〜Z と番号、下の行が (a × 番号 + b) を 26 で割った余りの文字。
  * 下の行で同じ文字に重なった列は朱の枠で囲み、その下に警告を出す（a が 26 と互いに素でないとき）。
  * 表示は渡された (a, b) から毎回作り、状態を持たない。ツールは正解を知らない。
+ * スマホ版は幅が足りないので、13 列 × 2 段に折り返す（0〜12 の段の下に 13〜25 の段）。
  */
 export function AffineStrip({ a, b, modulus, used, highlight }: AffineStripProps) {
+  const compact = useCompactLayout();
   const columns = affineColumns(a, b, modulus);
   const clash = clashingColumns(columns);
   const invertible = isInvertible(a, modulus);
@@ -36,36 +40,38 @@ export function AffineStrip({ a, b, modulus, used, highlight }: AffineStripProps
           暗号文 = ({a} × 番号 + {b}) を {modulus} で割った余り
         </span>
       </p>
-      <div className="mapping-grid" style={{ '--cols': modulus } as CSSProperties}>
-        <span className="map-head map-head-num">番号</span>
-        {columns.map((c) => (
-          <span key={`n${c.index}`} className={['map-num', ...flags(c.cipher, c.index)].join(' ')} data-row="number" data-col={c.index}>
-            {c.index}
-          </span>
-        ))}
-        <span className="map-head map-head-top">平文</span>
-        {columns.map((c) => (
-          <span
-            key={`p${c.index}`}
-            className={['map-cell', 'aff-plain', ...flags(c.cipher, c.index)].join(' ')}
-            data-row="plain"
-            data-col={c.index}
-          >
-            {c.plain}
-          </span>
-        ))}
-        <span className="map-head map-head-bottom">暗号文</span>
-        {columns.map((c) => (
-          <span
-            key={`c${c.index}`}
-            className={['map-cell', 'aff-cipher', ...flags(c.cipher, c.index)].join(' ')}
-            data-row="cipher"
-            data-col={c.index}
-          >
-            {c.cipher}
-          </span>
-        ))}
-      </div>
+      {(compact ? halves(columns) : [{ start: 0, items: columns }]).map((part) => (
+        <div key={part.start} className="mapping-grid" style={{ '--cols': part.items.length } as CSSProperties}>
+          <span className="map-head map-head-num">番号</span>
+          {part.items.map((c) => (
+            <span key={`n${c.index}`} className={['map-num', ...flags(c.cipher, c.index)].join(' ')} data-row="number" data-col={c.index}>
+              {c.index}
+            </span>
+          ))}
+          <span className="map-head map-head-top">平文</span>
+          {part.items.map((c) => (
+            <span
+              key={`p${c.index}`}
+              className={['map-cell', 'aff-plain', ...flags(c.cipher, c.index)].join(' ')}
+              data-row="plain"
+              data-col={c.index}
+            >
+              {c.plain}
+            </span>
+          ))}
+          <span className="map-head map-head-bottom">暗号文</span>
+          {part.items.map((c) => (
+            <span
+              key={`c${c.index}`}
+              className={['map-cell', 'aff-cipher', ...flags(c.cipher, c.index)].join(' ')}
+              data-row="cipher"
+              data-col={c.index}
+            >
+              {c.cipher}
+            </span>
+          ))}
+        </div>
+      ))}
       <p className="affine-warn" role="status" data-testid="affine-warning">
         {invertible ? '' : clashWarning(a)}
         {example ? <span className="affine-warn-eg">（{example}）</span> : null}

@@ -1,3 +1,4 @@
+import { useCompactLayout } from '../layout';
 import type { Game } from './game';
 import { fillPlaceholders } from './logic';
 import { paperHead } from './record';
@@ -23,7 +24,10 @@ interface ClearScreenProps {
 
 /** クリア画面。左に解読した電文（判子つき）、右に試した鍵の数と強い暗号との対比を見せる */
 export function ClearScreen({ game, tried, total, revisited, nextLabel, onNext, onMore, onRestart }: ClearScreenProps) {
-  useIdleTimeout(IDLE_MS, onRestart);
+  // スマホ版は自分の端末で遊ぶので、自動では戻さない。「次の人へ」は「もう一度遊ぶ」にする
+  const compact = useCompactLayout();
+  useIdleTimeout(IDLE_MS, onRestart, !compact);
+  const restartLabel = compact ? 'もう一度遊ぶ' : '次の人へ';
   const { stage, puzzle, record } = game;
   const { debrief } = stage;
   const values = { total: String(total) };
@@ -62,12 +66,12 @@ export function ClearScreen({ game, tried, total, revisited, nextLabel, onNext, 
                 {nextLabel}
               </button>
               <button type="button" className="secondary" onClick={onRestart}>
-                次の人へ
+                {restartLabel}
               </button>
             </>
           ) : (
             <button type="button" className="primary" onClick={onRestart}>
-              次の人へ
+              {restartLabel}
             </button>
           )}
           <button type="button" className="secondary" onClick={onMore}>

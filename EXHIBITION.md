@@ -434,6 +434,26 @@ DESIGN.md §2 の「なぜ a は 26 と互いに素でないとダメか」を�
   `src/stages/` 側の仮実装（`caesarStub.ts`・`vigenereStub.ts`・`affineStub.ts`）で代用し、差し替えは import 1 行で済むようにする。仮実装は `core` に置かない（`core` は本人の学習対象）。
   `affineStub.ts` は最大公約数 `gcd`・逆元 `modInverse`（無ければ null）も持つ（`core/modular.ts` の実装後に差し替える。差し替え先は `stages/affine.ts`・`tools/affine.ts` の import）
 - `core` の `attack` は簡易版では使わない（ヒントの鍵は出題時に分かっているため）
+- 画面の大きさへの合わせ方（2026 年 10 月 16 日。「展示環境」・「スマホ版」。`ui/index.css`・`layout.ts`）
+  - PC 版: ルートの `font-size` を `max(13px, min(clamp(18px, 0.6vw + 11px, 23px), 2.5vh, 1.41vw))` にする。幅による値と高さによる値の小さいほうに合わせる式で、
+    1366×768 では従来と同じ約 19px、高さ 600px では 15px 前後、幅 1024px では約 14.4px になる。寸法は rem・vh・vw で書き、px 固定にしない
+    （1366×768 以上の見た目を変えない px の寸法は `min(元の px, rem での値)`。ボタンの高さ・回転ボタン・円盤の高さの引き算）。
+    ステージ 2 の円盤の大きさ `--dial` には幅の上限（17.2vw）と高さの上限（36vh 基準）の両方を効かせる。計算機の文は折り返してよい（nowrap にしない）
+  - スマホ版の判定: `src/layout.ts` の `COMPACT_QUERY`（`(max-width: 1023.98px), (max-height: 599.98px)`）と、これを購読するフック `useCompactLayout()`（`useSyncExternalStore` で `matchMedia` を見る）。
+    CSS は `index.css` 末尾の `@media` に同じ文字列を書き、`layout.test.ts` が一致を検査する。`tools/` が `ui/` を import しないよう、どちらにも属さない `src` 直下に置いた。
+    `font-size` はスマホ版で `clamp(15px, 4.2vw, 18px)`、`body` は `overflow: auto`、`.screen` は高さ自動・最大幅 44rem で中央に寄せる
+  - フックを使う箇所: 自動復帰の停止（`useIdleTimeout(ms, onTimeout, enabled)` の第 3 引数に `!compact`。`PlayScreen`・`ClearScreen`・`NotesScreen`）、
+    文言の切り替え（待機「タップ」・演出「タップで先へ進む」・クリア「もう一度遊ぶ」・重ねたときの案内・計算機の手順 1）、
+    待機画面の QR を描かない、ツールのタップ動作・13 列 × 2 段の対応表・ステージ 2 の切り替え
+  - タップで光る: `tools/mapping.ts` の `tapCell(words, owners, current, tapped)`（光っている文字をもう一度タップで消す。同じ暗号文の文字かつ同じ円盤のどの出現でも消える）。
+    スマホ版（compact）の電文の文字は `onMouseEnter/Leave` を付けず（タッチ端末はタップでマウスのイベントも合成し、二重に動くため）、`onClick` で `tapCell` を呼ぶ。
+    最初の単語の列（ステージ 2・3）のタップは、列の選択（計算機への入力）と光る表示の設定を同時に行う（`onPick`）。もう一度タップで両方を解除する
+  - 対応表の折り返し: `MappingStrip`・`AffineStrip` が compact のとき `halves()`（`mapping.ts`）で 26 列を 13 列ずつの 2 つの `.mapping-grid` に分ける
+  - ステージ 2（`MultiClock`）は compact のとき「① 鍵 0 / ② 鍵 0 / ③ 鍵 0」のタブ（`.dial-tab`）を出し、操作対象でない円盤は CSS で隠す。ステージ 3 の a のボタンは CSS の 5 × 5 の格子。
+    配置は `data-tool` ごとの `grid-template-areas`（ステージ 1: 電文 → 対応表 → 円盤 → 主ボタン → ヒント。ステージ 2: 電文 → 与件 → 対応表 → 円盤 → 計算機 → …。ステージ 3: 電文 → 与件 → 対応表 → 鍵の選択 → 計算機 → …）で切り替える
+  - タッチ: 回転ボタンは円盤の下に並べて大きくする（`.dial-holder` を 2 列のグリッドにする）。`body` は `touch-action: manipulation`（↻ を素早く続けて押したときのダブルタップ拡大を止める）。円盤の上（`.dial-wrap`）は `none`。
+    押せるものは 44px 以上（電文の文字は 1.45rem 幅で、44px には満たないが、1 つの列は縦にも並ぶ。語の塊を折り返せないため幅はこれ以上広げられない）
+  - 待機画面の QR（`ui/IdleScreen.tsx`）: `assets/coset-qr.svg?inline` で data URI として埋め込む（4KB を超えるため、既定のままだと別ファイルに出て単一ファイルのビルドから外れる）。PC 版だけ、本文の最後に「スマホでも遊べる」と一緒に置く
 
 ## ビルドと配信
 

@@ -35,8 +35,15 @@
   --note-color: var(--sub);
   --sans: 'Yu Gothic UI', 'Hiragino Sans', system-ui, sans-serif;
   --mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
-  /* 1366px で約 19px、1920px で約 22px */
-  font-size: clamp(18px, calc(0.6vw + 11px), 23px);
+  /*
+   * 文字と寸法の基準（rem）は、画面の幅と高さの小さいほうに合わせる（2026/10/16）。
+   * 幅による値: 1366px で約 19px、1920px で約 22.5px。1.41vw は幅 1024px で約 14.4px（1366×768 と同じ 71rem 幅に収まる）。
+   * 高さによる値: 2.5vh は高さ 768px で 19.2px、600px で 15px（1366×768 と同じ 40rem の高さに収まる）。
+   * 下限 13px。これ以下の画面（幅 1024px・高さ 600px 未満）は対象外。
+   * 寸法は rem か vh/vw で書き、px 固定にしない（px にすると画面が小さいときに相対的に大きくなり、はみ出す）。
+   * 1366×768 以上の見た目を変えない px の寸法は、min(元の px, rem での値) で書く（ボタンの高さ・回転ボタン・円盤の高さの引き算）。
+   */
+  font-size: max(13px, min(clamp(18px, calc(0.6vw + 11px), 23px), 2.5vh, 1.41vw));
   font-family: var(--sans);
   font-feature-settings: 'palt';
   line-height: 1.6;
@@ -75,7 +82,7 @@ button {
   font: inherit;
   color: var(--ink);
   cursor: pointer;
-  min-height: 44px;
+  min-height: min(44px, 2.3rem); /* 1366×768 以上は 44px。小さい画面では rem に合わせて縮む */
   padding: 0.35em 1.1em;
   border: 2px solid var(--line);
   border-radius: 6px;
@@ -329,6 +336,26 @@ button.primary {
   color: var(--sub);
 }
 
+/* 「スマホでも遊べる」と QR コード（PC 版の待機画面だけ）。本文の流れの最後に置く（本文と重ならない） */
+.idle-qr {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 3vh;
+}
+
+.idle-qr-text {
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.idle-qr-image {
+  display: block;
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: 3px;
+}
+
 /* ---- 傍受演出 ---- */
 
 .intercept {
@@ -460,8 +487,8 @@ button.restart.armed {
   align-items: center;
   justify-content: center;
   gap: 1px;
-  width: 44px;
-  height: 54px;
+  width: min(44px, 2.3rem);
+  height: min(54px, 2.82rem);
   min-height: 0;
   padding: 0;
   border-radius: 14px;
@@ -478,8 +505,8 @@ button.restart.armed {
 
 .turn-arrow {
   display: block;
-  width: 32px;
-  height: 28px;
+  width: min(32px, 1.67rem);
+  height: min(28px, 1.46rem);
 }
 
 .turn-arc {
@@ -793,7 +820,7 @@ button.hint.ready {
  * 方式ごとの分岐ではなく、ツールの ID（data-tool）で配置を切り替える。 */
 
 .play[data-tool='multi-clock'] {
-  --dial: min(max(28vh, calc(36vh - 60px)), 19vw);
+  --dial: min(max(28vh, calc(36vh - min(60px, 3.13rem))), 17.2vw);
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: repeat(7, auto);
   grid-template-areas:
@@ -1530,5 +1557,563 @@ button.b-btn {
 
   .stamp {
     animation: none;
+  }
+}
+
+/*
+ * ---- スマホ版（縦 1 列の配置）----
+ * 幅 1024px 未満、または高さ 600px 未満で切り替える（EXHIBITION.md「スマホ版」）。条件の文字列は src/layout.ts の
+ * COMPACT_QUERY と同じ（JS 側の判定と食い違わないよう layout.test.ts が検査する）。
+ * PC 版の「スクロールなし」は適用せず、縦スクロールを許す。横にははみ出させない。
+ * 押せるものは 44px 以上。円盤の上（.dial-wrap）は touch-action: none でページをスクロールさせない（上の共通規則）。
+ * 上のスタイルを上書きするので、同じ詳細度の規則はこのブロックを最後に置いている。
+ */
+@media (max-width: 1023.98px), (max-height: 599.98px) {
+  :root {
+    /* 幅 360px で約 15px、390px で約 16.4px、768px 以上で 18px */
+    font-size: clamp(15px, 4.2vw, 18px);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    min-height: 100%;
+  }
+
+  body {
+    overflow: auto;
+    /* ダブルタップでの拡大を止める（↻ を素早く続けて押すと拡大してしまうため）。ピンチ拡大は残す。円盤の上は .dial-wrap の none が優先される */
+    touch-action: manipulation;
+  }
+
+  button {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 44rem;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin-inline: auto;
+    padding: 1rem 0.9rem 2rem;
+    overflow: visible;
+  }
+
+  .paper {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .paper-head {
+    margin-bottom: 0.6rem;
+  }
+
+  /* ---- 待機画面（QR は出さない。JS 側で描かない） ---- */
+
+  .idle {
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+
+  .idle-dial {
+    width: min(62vw, 30vh, 18rem);
+  }
+
+  .idle-body {
+    align-items: center;
+    text-align: center;
+  }
+
+  .title {
+    margin-top: 0.2rem;
+    font-size: 4.2rem;
+  }
+
+  .subtitle {
+    font-size: 1.3rem;
+  }
+
+  .idle-paper {
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .idle-teaser {
+    font-size: 1.1rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .cta {
+    margin-top: 1.2rem;
+    font-size: 1.3rem;
+  }
+
+  .cta-note {
+    margin-top: 0.6rem;
+  }
+
+  /* ---- 傍受演出 ---- */
+
+  .intercept {
+    gap: 1.2rem;
+  }
+
+  .intercept-head,
+  .intercept-paper {
+    width: 100%;
+  }
+
+  .intercept-paper {
+    padding: 1.1rem 0.9rem;
+  }
+
+  .intercept-text {
+    font-size: 1.35rem;
+    letter-spacing: 0.06em;
+  }
+
+  .intercept-status {
+    font-size: 1.2rem;
+  }
+
+  /* ---- 解読画面 ----
+   * 上から 記録・「最初から」→ フレーバー → 電文 →（ステージ 2・3 は与件）→ 対応表 → 円盤と ↺ ↻（ステージ 3 は鍵の選択）→ 名札と試した鍵
+   * →（ステージ 2・3 は鍵の計算機）→ 「これで解読」と不正解の表示 → ヒント。ツールの ID（data-tool）で並べ替える。 */
+
+  .play,
+  .play[data-tool='multi-clock'],
+  .play[data-tool='affine-table'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    column-gap: 0;
+    row-gap: 0.9rem;
+    align-content: start;
+    padding-block: 1rem 2rem;
+  }
+
+  .play {
+    grid-template-areas:
+      'head'
+      'flv'
+      'paper'
+      'map'
+      'dial'
+      'act'
+      'hints';
+  }
+
+  .play[data-tool='multi-clock'] {
+    grid-template-areas:
+      'head'
+      'flv'
+      'paper'
+      'giv'
+      'map'
+      'dials'
+      'ctl'
+      'calc'
+      'act'
+      'hints';
+  }
+
+  .play[data-tool='affine-table'] {
+    grid-template-areas:
+      'head'
+      'flv'
+      'paper'
+      'giv'
+      'map'
+      'ctl'
+      'calc'
+      'act'
+      'hints';
+  }
+
+  .play-head {
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+  }
+
+  .play-head .record {
+    font-size: 1rem;
+  }
+
+  button.restart {
+    min-height: 44px;
+  }
+
+  .flavor,
+  .play[data-tool='multi-clock'] .flavor,
+  .play[data-tool='affine-table'] .flavor {
+    grid-area: flv;
+    align-self: auto;
+    justify-self: stretch;
+  }
+
+  /* 与件（最初の単語）: 電文のすぐ下に置く */
+  .givens,
+  .play[data-tool='multi-clock'] .givens,
+  .play[data-tool='affine-table'] .givens {
+    grid-area: giv;
+    align-self: auto;
+    justify-self: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.1rem 1.2rem;
+  }
+
+  /* 電文: 1 文字を指で押せる幅にし、単語の塊を折り返す */
+  .word,
+  .tool-multi .word {
+    --cell: 1.45rem;
+  }
+
+  .words,
+  .tool-multi .words {
+    gap: 0.7rem 1rem;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .play[data-tool='multi-clock'] .tool-text,
+  .play[data-tool='affine-table'] .tool-text {
+    padding: 0.8rem 0.9rem;
+  }
+
+  /* 光ったときの 1 行は折り返してよい。出し入れで下の配置が動かないよう 2 行ぶんの高さを確保する */
+  .hover-note,
+  .paper-head .hover-note {
+    white-space: normal;
+    min-height: 2.9em;
+    text-align: left;
+  }
+
+  .paper-head .hover-note {
+    margin: 0;
+  }
+
+  .paper-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+  }
+
+  /* 対応表: 13 列 × 2 段（段は MappingStrip / AffineStrip が分ける） */
+  .mapping,
+  .play[data-tool='multi-clock'] .mapping,
+  .play[data-tool='affine-table'] .mapping {
+    align-self: auto;
+    justify-self: stretch;
+  }
+
+  .mapping-grid,
+  .play[data-tool='multi-clock'] .mapping-grid,
+  .play[data-tool='affine-table'] .mapping-grid {
+    --map-col: minmax(0, 1fr);
+  }
+
+  .mapping-grid + .mapping-grid {
+    margin-top: 0.5rem;
+  }
+
+  .map-head {
+    padding-right: 0.4rem;
+  }
+
+  /* 円盤: 画面の幅いっぱい（高さの上限つき）。下に大きな ↺ ↻ を並べる */
+  .tool-dial,
+  .multi-dial {
+    justify-self: center;
+    width: min(100%, 25rem, 68vh);
+  }
+
+  .multi-dial,
+  .multi-dial.active {
+    padding: 0;
+    border-color: transparent;
+  }
+
+  .dial-holder {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .dial-holder > .dial-wrap {
+    grid-column: 1 / -1;
+  }
+
+  .turn-btn,
+  .multi-dial .turn-btn {
+    position: static;
+    flex-direction: row;
+    gap: 0.6rem;
+    width: auto;
+    height: 4rem;
+    min-height: 44px;
+    border-radius: 14px;
+  }
+
+  .turn-arrow {
+    width: 2.4rem;
+    height: 2.1rem;
+  }
+
+  .turn-delta {
+    font-size: 1.15rem;
+  }
+
+  .dial-legend {
+    flex-wrap: wrap;
+    margin-top: 0.6rem;
+    row-gap: 0.1rem;
+  }
+
+  .dial-controls {
+    margin-top: 0.3rem;
+  }
+
+  .attempts {
+    margin: 0;
+  }
+
+  /* ステージ 2: 円盤は 1 枚ずつ大きく出し、「① 鍵 0 / ② 鍵 0 / ③ 鍵 0」で切り替える */
+  .tool-dials {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    row-gap: 0.6rem;
+  }
+
+  .multi-dial:not(.active) {
+    display: none;
+  }
+
+  .dial-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  button.dial-tab {
+    min-height: 3rem;
+    padding: 0.2em 0.3em;
+    font: 700 1.05rem/1.2 var(--mono);
+    color: var(--sub);
+  }
+
+  button.dial-tab.active {
+    color: var(--paper);
+    background: var(--plate);
+    border-color: var(--ink);
+  }
+
+  .play[data-tool='multi-clock'] .tool-controls {
+    align-self: auto;
+    justify-content: center;
+  }
+
+  .multi-dial .attempts {
+    margin-top: 0.3rem;
+  }
+
+  /* ステージ 3: a のボタンは 5 × 5 の格子。b は ← →、今の a・b は下の行に大きく */
+  .affine-a-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  button.a-btn {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0;
+    font-size: 1.2rem;
+  }
+
+  .affine-b-row {
+    flex-wrap: wrap;
+  }
+
+  button.b-btn {
+    flex: 1;
+    min-height: 48px;
+  }
+
+  .affine-key {
+    flex: 1 0 100%;
+    justify-content: center;
+    margin: 0.2rem 0 0;
+    font-size: 1.6rem;
+  }
+
+  /* 鍵の計算機: 縦に積む。長い式・ボタンの文は折り返す */
+  /* 手順 3 のボタンと注意だけ折り返す（番号と文は同じ行に置く） */
+  .calc-step[data-step="3"] {
+    flex-wrap: wrap;
+  }
+
+  .step-text,
+  .calc-expression,
+  .play[data-tool="affine-table"] .calc-expression {
+    flex: 1 1 0;
+  }
+
+  button.calc-align {
+    flex: 1 1 14rem;
+    min-height: 44px;
+  }
+
+  .calc-caution {
+    flex: 1 0 100%;
+  }
+
+  .calc-expression,
+  .play[data-tool='affine-table'] .calc-expression {
+    font-size: 0.85rem;
+  }
+
+  /* 主ボタンと不正解の表示: 親指の届く位置に、幅いっぱいの大きなボタン */
+  .play-actions,
+  .play[data-tool='multi-clock'] .play-actions,
+  .play[data-tool='affine-table'] .play-actions {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    justify-self: stretch;
+    gap: 0.3rem;
+  }
+
+  .play-actions .feedback {
+    text-align: center;
+  }
+
+  .play-actions button.primary {
+    min-height: 3.4rem;
+    font-size: 1.2rem;
+  }
+
+  /* ヒント: 縦に並べ、文は折り返す */
+  .hints {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .hint,
+  .hint.opened {
+    flex: none;
+    align-self: stretch;
+    white-space: normal;
+    min-height: 44px;
+  }
+
+  button.hint.ready {
+    justify-content: flex-start;
+  }
+
+  /* ---- クリア画面 ---- */
+
+  .clear {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    align-items: start;
+    row-gap: 1.4rem;
+  }
+
+  .clear-paper {
+    padding: 0.9rem 0.9rem 5.2rem;
+  }
+
+  .clear-plain {
+    font-size: 1.3rem;
+  }
+
+  .clear-translation {
+    margin-top: 0.8rem;
+    font-size: 1.1rem;
+  }
+
+  .stamp {
+    right: 0.9rem;
+    bottom: 0.9rem;
+    font-size: 2.2rem;
+  }
+
+  .clear-count-sub {
+    font-size: 1.2rem;
+  }
+
+  .clear-count {
+    font-size: 1.5rem;
+  }
+
+  .clear-count strong {
+    font-size: 4.4rem;
+  }
+
+  .versus {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+  }
+
+  .versus-row + .versus-row {
+    margin-top: 1rem;
+  }
+
+  .closing {
+    margin-top: 1.4rem;
+    font-size: 1.25rem;
+  }
+
+  .clear-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+  }
+
+  .clear-actions button {
+    min-height: 3.2rem;
+  }
+
+  /* ---- もっと知る ---- */
+
+  .notes {
+    gap: 1rem;
+  }
+
+  .notes-title {
+    font-size: 1.5rem;
+  }
+
+  .notes-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 0.8rem;
+  }
+
+  .note {
+    overflow: visible;
+    padding: 1rem;
+  }
+
+  .note-body {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+
+  /* 図は 39 桁の等幅。画面の幅に収まる大きさまで文字を小さくする */
+  .note-figure {
+    margin-top: 0.8rem;
+    font-size: min(1.1rem, calc((100vw - 3.8rem) / 24.6));
   }
 }

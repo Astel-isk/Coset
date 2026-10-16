@@ -54,5 +54,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    // layout.test.ts が index.css を ?raw で読むため、CSS を空にしない
+    css: { include: [/index\.css/] },
   },
 });

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCompactLayout } from '../layout';
 import { DONE_HOLD_MS, REDUCED_HOLD_MS, SKIP_GRACE_MS, typingInterval } from './intercept';
 import type { InterceptRecord } from './record';
 import { prefersReducedMotion } from './useReducedMotion';
@@ -18,6 +19,7 @@ interface InterceptScreenProps {
  * クリック・Enter・Space で飛ばせる。prefers-reduced-motion では全文を出してすぐ（約 0.8 秒で）切り替える。
  */
 export function InterceptScreen({ record, ciphertext, headline, onDone }: InterceptScreenProps) {
+  const compact = useCompactLayout();
   const [reduced] = useState(prefersReducedMotion);
   const length = ciphertext.length;
   const [count, setCount] = useState(reduced ? length : 0);
@@ -80,7 +82,7 @@ export function InterceptScreen({ record, ciphertext, headline, onDone }: Interc
       <p className="intercept-status" role="status">
         {done ? '受信完了' : ''}
       </p>
-      <p className="intercept-skip">クリックか Enter で先へ進む</p>
+      <p className="intercept-skip">{compact ? 'タップで先へ進む' : 'クリックか Enter で先へ進む'}</p>
     </main>
   );
 }

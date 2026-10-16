@@ -5,8 +5,9 @@ import { hoverSentence, isInvertible, keyTotal, restoreText } from './affine';
 import { affineReducer, initialAffineState } from './affineState';
 import { affineAlignedMessage, columnClasses, columnPair, pickableColumns, toggleColumn } from './calcSteps';
 import type { ColumnPick } from './calcSteps';
+import { useCompactLayout } from '../layout';
 import { pairWords } from './clock';
-import { highlightedCells, hoverTarget, usedCipherLetters } from './mapping';
+import { highlightedCells, hoverTarget, tapCell, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { ownersOfWords } from './multiState';
 import type { ToolProps } from './types';
@@ -20,6 +21,8 @@ const HINT_WORD_ID = 'first-word';
  * column を渡した行（最初の単語の各段）は、手がかりのある列のクリックを列の番号で通知し、
  * 選んだ列は朱の塗り、マウスが乗った列は薄い地で示す（鍵の計算機への入力）。
  * 戻した文の「?」（戻し先が 1 つに決まらない文字）は薄く描く。
+ * スマホ版（compact）は、重ねる代わりにタップで光らせる（もう一度タップで消す）。手がかりのある列のタップは、計算機への入力と光る表示を同時に行う。
+ * タッチ端末はタップでマウスのイベントも合成するため、compact では onMouseEnter/Leave を付けない。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
 function Row({
@@ -28,6 +31,8 @@ function Row({
   word,
   lit,
   onHover,
+  onTap,
+  compact,
   column,
 }: {
   readonly className: string;
@@ -36,6 +41,8 @@ function Row({
   readonly word: number;
   readonly lit: readonly boolean[];
   readonly onHover: (pos: CellPos | null) => void;
+  readonly onTap: (pos: CellPos) => void;
+  readonly compact: boolean;
   readonly column?: ColumnPick;
 }) {
   return (
@@ -44,9 +51,11 @@ function Row({
         <span
           key={i}
           className={`cell${lit[i] ? ' hl' : ''}${columnClasses(column, i)}${cell === '?' ? ' unknown' : ''}`}
-          onMouseEnter={() => onHover({ word, index: i })}
-          onMouseLeave={() => onHover(null)}
-          onClick={column?.pickable[i] ? () => column.onPick(i) : undefined}
+          onMouseEnter={compact ? undefined : () => onHover({ word, index: i })}
+          onMouseLeave={compact ? undefined : () => onHover(null)}
+          onClick={
+            column?.pickable[i] ? () => column.onPick(i) : compact ? () => onTap({ word, index: i }) : undefined
+          }
         >
           {cell}
         </span>
@@ -63,6 +72,7 @@ function Row({
  */
 export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, onAttempts, actions }: ToolProps<'affine-table'>) {
   const { modulus } = mount;
+  const compact = useCompactLayout();
   const [state, dispatch] = useReducer(affineReducer, undefined, initialAffineState);
   const { a, b } = state;
   const invertible = isInvertible(a, modulus);
@@ -78,6 +88,7 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
   const [hover, setHover] = useState<CellPos | null>(null);
   const target = useMemo(() => hoverTarget(cipherWords, owners, hover), [cipherWords, owners, hover]);
   const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
+  const onTap = (pos: CellPos) => setHover((cur) => tapCell(cipherWords, owners, cur, pos));
 
   // 鍵の計算機。電文の最初の単語の列を 1 回クリックすると、暗号文の文字と手がかりの文字の組が入る。
   // 選んだ列は番号だけ持ち、文字は毎回そこから引く。ボタンを押したら解除する
@@ -95,10 +106,13 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
       : {
           pickable,
           selected: selCol,
-          hovered: hover?.word === 0 ? hover.index : null,
+          hovered: !compact && hover?.word === 0 ? hover.index : null,
           onPick: (col) => {
-            setSelCol((cur) => toggleColumn(cur, col));
+            const next = toggleColumn(selCol, col);
+            setSelCol(next);
             setDone(null);
+            // スマホ版: 列のタップで、計算機への入力と光る表示を同時に行う（もう一度タップで両方消える）
+            if (compact) setHover(next === null ? null : { word: 0, index: col });
           },
         };
 
@@ -203,7 +217,7 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
         <p className="paper-head">
           <span>{heading}</span>
           <span className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
-            {target ? hoverSentence(target.letter, a, b, modulus) : '電文の文字にマウスを重ねると、対応表の元の文字が光る'}
+            {target ? hoverSentence(target.letter, a, b, modulus) : compact ? '電文の文字をタップすると、対応表の元の文字が光る' : '電文の文字にマウスを重ねると、対応表の元の文字が光る'}
           </span>
         </p>
         <div className="words">
@@ -218,6 +232,8 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  onTap={onTap}
+                  compact={compact}
                   column={column}
                 />
                 {column && hintWord !== null ? (
@@ -227,6 +243,8 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
                     word={i}
                     lit={[]}
                     onHover={setHover}
+                    onTap={onTap}
+                    compact={compact}
                     column={column}
                   />
                 ) : null}
@@ -236,6 +254,8 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
                   word={i}
                   lit={lit[i] ?? []}
                   onHover={setHover}
+                  onTap={onTap}
+                  compact={compact}
                   column={column}
                 />
               </div>

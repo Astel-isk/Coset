@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useCompactLayout } from '../layout';
 import { ToolHost } from '../tools/ToolHost';
 import type { Game } from './game';
 import { fillPlaceholders, foldedHintLabel, hintState, isCorrect } from './logic';
@@ -44,7 +45,9 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
   const [openedHints, setOpenedHints] = useState(0);
   const [failed, setFailed] = useState(false);
 
-  useIdleTimeout(IDLE_MS, onRestart);
+  // スマホ版は自分の端末で遊ぶので、自動では戻さない
+  const compact = useCompactLayout();
+  useIdleTimeout(IDLE_MS, onRestart, !compact);
 
   const handleCandidate = useCallback((plaintext: string) => {
     setCandidate(plaintext);

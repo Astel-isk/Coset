@@ -59,6 +59,23 @@ export function hoverTarget(words: readonly string[], owners: Owners, pos: CellP
 }
 
 /**
+ * 電文の文字をタップしたあとの強調の位置（スマホ版。マウスを重ねる代わり）。
+ * いま光っている文字（同じ暗号文の文字かつ同じ円盤）をもう一度タップしたら消す。別の文字なら光らせ直す。
+ * 空白・記号のタップは消す。
+ */
+export function tapCell(
+  words: readonly string[],
+  owners: Owners,
+  current: CellPos | null,
+  tapped: CellPos,
+): CellPos | null {
+  const next = hoverTarget(words, owners, tapped);
+  if (!next) return null;
+  const now = hoverTarget(words, owners, current);
+  return now !== null && now.letter === next.letter && now.owner === next.owner ? null : tapped;
+}
+
+/**
  * 強調する出現の位置。同じ暗号文の文字で、かつ同じ円盤が受け持つ位置だけを true にする
  * （上段・下段・番号行は同じ位置で光らせるので、位置の表は 1 つ）。target が null なら全部 false。
  */
@@ -70,6 +87,15 @@ export function highlightedCells(
   return words.map((word, w) =>
     word.split('').map((ch, i) => target !== null && ch === target.letter && owners[w]?.[i] === target.owner),
   );
+}
+
+/** 26 列の表をスマホ版で 13 列 × 2 段に折り返すための分割。start は各段の先頭の列の番号 */
+export function halves<T>(items: readonly T[]): readonly { readonly start: number; readonly items: readonly T[] }[] {
+  const half = Math.ceil(items.length / 2);
+  return [
+    { start: 0, items: items.slice(0, half) },
+    { start: half, items: items.slice(half) },
+  ];
 }
 
 /** 暗号文の文字 letter が、鍵 k のとき内側のどの文字に戻るか（外周の X の内側にある X−k） */

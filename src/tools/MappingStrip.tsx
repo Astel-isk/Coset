@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
-import { mappingColumns } from './mapping';
+import { useCompactLayout } from '../layout';
+import { halves, mappingColumns } from './mapping';
 
 interface MappingStripProps {
   /** 見出し（ステージ 1: 「対応表」、ステージ 2: 「② の対応表」） */
@@ -21,8 +22,10 @@ interface MappingStripProps {
  * 対応表: 円盤を切り開いて伸ばした 2 行 × 26 列の表（円盤の外周と内周を、逆さの文字を読まずに一度に読めるようにする）。
  * 上の行は暗号文の A〜Z（固定）、下の行は今の鍵でその内側に来る平文の文字。A の列は朱の枠で囲み、
  * 円盤の読み取り窓と同じ列だと分かるようにする。表示は渡された鍵から毎回作り、状態を持たない。
+ * スマホ版は幅が足りないので、13 列 × 2 段に折り返す（A〜M の段の下に N〜Z の段）。
  */
 export function MappingStrip({ title, k, modulus, used, highlight, dial, numbers = true }: MappingStripProps) {
+  const compact = useCompactLayout();
   const columns = mappingColumns(k, modulus);
   const cellClass = (cipher: string, row: 'num' | 'top' | 'bottom'): string => {
     const classes = row === 'num' ? ['map-num'] : ['map-cell', `map-${row}`];
@@ -34,36 +37,38 @@ export function MappingStrip({ title, k, modulus, used, highlight, dial, numbers
   return (
     <section className="mapping" aria-label={title} data-testid="mapping-strip" data-dial={dial}>
       <p className="mapping-title">{title}</p>
-      <div className="mapping-grid" style={{ '--cols': modulus } as CSSProperties}>
-        {numbers ? (
-          <>
-            <span className="map-head map-head-num">番号</span>
-            {columns.map((c, i) => (
-              <span key={`n${c.cipher}`} className={cellClass(c.cipher, 'num')} data-col={c.cipher} data-row="number">
-                {i}
-              </span>
-            ))}
-          </>
-        ) : null}
-        <span className="map-head map-head-top">暗号文</span>
-        {columns.map((c) => (
-          <span key={`c${c.cipher}`} className={cellClass(c.cipher, 'top')} data-col={c.cipher} data-row="cipher">
-            {c.cipher}
-          </span>
-        ))}
-        <span className="map-head map-head-bottom">平文</span>
-        {columns.map((c) => (
-          <span
-            key={`p${c.cipher}`}
-            className={cellClass(c.cipher, 'bottom')}
-            data-col={c.cipher}
-            data-row="plain"
-            data-testid={c.cipher === 'A' ? 'window-letter' : undefined}
-          >
-            {c.plain}
-          </span>
-        ))}
-      </div>
+      {(compact ? halves(columns) : [{ start: 0, items: columns }]).map((part) => (
+        <div key={part.start} className="mapping-grid" style={{ '--cols': part.items.length } as CSSProperties}>
+          {numbers ? (
+            <>
+              <span className="map-head map-head-num">番号</span>
+              {part.items.map((c, i) => (
+                <span key={`n${c.cipher}`} className={cellClass(c.cipher, 'num')} data-col={c.cipher} data-row="number">
+                  {part.start + i}
+                </span>
+              ))}
+            </>
+          ) : null}
+          <span className="map-head map-head-top">暗号文</span>
+          {part.items.map((c) => (
+            <span key={`c${c.cipher}`} className={cellClass(c.cipher, 'top')} data-col={c.cipher} data-row="cipher">
+              {c.cipher}
+            </span>
+          ))}
+          <span className="map-head map-head-bottom">平文</span>
+          {part.items.map((c) => (
+            <span
+              key={`p${c.cipher}`}
+              className={cellClass(c.cipher, 'bottom')}
+              data-col={c.cipher}
+              data-row="plain"
+              data-testid={c.cipher === 'A' ? 'window-letter' : undefined}
+            >
+              {c.plain}
+            </span>
+          ))}
+        </div>
+      ))}
     </section>
   );
 }

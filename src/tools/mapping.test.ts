@@ -3,11 +3,13 @@ import { decrypt, encrypt } from '../stages/vigenereStub';
 import { ownersOfWords } from './multiState';
 import {
   highlightedCells,
+  halves,
   hoverTarget,
   innerIndexAt,
   mappingColumns,
   outerIndexOf,
   plainLetterOf,
+  tapCell,
   usedCipherLetters,
 } from './mapping';
 
@@ -114,6 +116,50 @@ describe('hoverTarget / highlightedCells', () => {
 
   it('target が null なら全部 false', () => {
     expect(highlightedCells(['AB'], ownersOfWords(['AB'], 1), null)).toEqual([[false, false]]);
+  });
+});
+
+describe('halves（スマホ版の 13 列 × 2 段）', () => {
+  it('26 列を 13 列ずつ 2 段に分け、各段の先頭の番号を持つ', () => {
+    const cols = Array.from({ length: 26 }, (_, i) => i);
+    const [upper, lower] = halves(cols);
+    expect(upper).toEqual({ start: 0, items: cols.slice(0, 13) });
+    expect(lower).toEqual({ start: 13, items: cols.slice(13) });
+  });
+
+  it('奇数列でも欠けない（上の段が 1 列多い）', () => {
+    const [upper, lower] = halves([1, 2, 3]);
+    expect(upper?.items).toEqual([1, 2]);
+    expect(lower).toEqual({ start: 2, items: [3] });
+  });
+});
+
+describe('tapCell（スマホ版のタップで光る・もう一度タップで消える）', () => {
+  const words = ['ABA', 'AB-'];
+  const owners = ownersOfWords(words, 1);
+
+  it('光っていない文字をタップすると、その位置を光らせる', () => {
+    expect(tapCell(words, owners, null, { word: 0, index: 1 })).toEqual({ word: 0, index: 1 });
+  });
+
+  it('光っている文字をもう一度タップすると消える（同じ文字の別の出現でも消える）', () => {
+    expect(tapCell(words, owners, { word: 0, index: 0 }, { word: 0, index: 0 })).toBeNull();
+    expect(tapCell(words, owners, { word: 0, index: 0 }, { word: 1, index: 0 })).toBeNull();
+  });
+
+  it('別の文字をタップすると光らせ直す', () => {
+    expect(tapCell(words, owners, { word: 0, index: 0 }, { word: 0, index: 1 })).toEqual({ word: 0, index: 1 });
+  });
+
+  it('空白・記号など光らせられない位置のタップは消す', () => {
+    expect(tapCell(words, owners, { word: 0, index: 0 }, { word: 1, index: 2 })).toBeNull();
+  });
+
+  it('ステージ 2: 同じ文字でも受け持つ円盤が違えば別の文字として光らせ直す', () => {
+    const w = ['ABA'];
+    const o = ownersOfWords(w, 3);
+    // 通し番号 0 1 2 → A は ① と ③ が受け持つ
+    expect(tapCell(w, o, { word: 0, index: 0 }, { word: 0, index: 2 })).toEqual({ word: 0, index: 2 });
   });
 });
 

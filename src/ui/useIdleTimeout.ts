@@ -5,14 +5,16 @@ const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel'] as co
 /**
  * 無操作が ms ミリ秒続いたら onTimeout を呼ぶ（展示で次の来場者のために待機へ戻すため）。
  * マウス・キーボード・ホイールの操作で時間を数え直す。
+ * enabled が false のときは何もしない（スマホ版は自分の端末で遊ぶので、自動では戻さない。EXHIBITION.md「スマホ版」）。
  */
-export function useIdleTimeout(ms: number, onTimeout: () => void): void {
+export function useIdleTimeout(ms: number, onTimeout: () => void, enabled = true): void {
   const callbackRef = useRef(onTimeout);
   useEffect(() => {
     callbackRef.current = onTimeout;
   }, [onTimeout]);
 
   useEffect(() => {
+    if (!enabled) return;
     let timer = window.setTimeout(() => callbackRef.current(), ms);
     const reset = () => {
       window.clearTimeout(timer);
@@ -23,5 +25,5 @@ export function useIdleTimeout(ms: number, onTimeout: () => void): void {
       window.clearTimeout(timer);
       for (const name of ACTIVITY_EVENTS) window.removeEventListener(name, reset);
     };
-  }, [ms]);
+  }, [ms, enabled]);
 }

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
+import { useCompactLayout } from '../layout';
 import { decrypt } from '../stages/caesarStub'; // core/ciphers/caesar.ts の実装後にここを差し替える
 import { ALPHABET, mod, normalizeAngleDelta, pairWords } from './clock';
 import { Dial } from './Dial';
 import { restoreSentence } from './formula';
-import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from './mapping';
+import { highlightedCells, hoverTarget, outerIndexOf, tapCell, usedCipherLetters } from './mapping';
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { ownersOfWords } from './multiState';
@@ -36,6 +37,8 @@ function reducer(state: State, action: Action): State {
 /**
  * 1 語の 1 段。1 文字ずつ同じ幅のセルに入れ、上段と下段の字の大きさが違っても文字が縦に揃うようにする。
  * 文字にマウスを重ねると onHover に位置を渡し（離れたら null）、lit の文字は朱で光らせる。
+ * スマホ版（compact）は重ねる代わりにタップで onTap に位置を渡す（もう一度タップで消すのは呼び出し側）。
+ * タッチ端末はタップでマウスのイベントも合成するため、compact では onMouseEnter/Leave を付けない。
  * 添字を key にするのは、同じ語の中で文字が重複するため（並びは変わらない）。
  */
 function WordRow({
@@ -44,6 +47,8 @@ function WordRow({
   word,
   lit,
   onHover,
+  onTap,
+  compact,
 }: {
   readonly className: string;
   readonly text: string;
@@ -51,6 +56,8 @@ function WordRow({
   readonly word: number;
   readonly lit: readonly boolean[];
   readonly onHover: (pos: CellPos | null) => void;
+  readonly onTap: (pos: CellPos) => void;
+  readonly compact: boolean;
 }) {
   return (
     <span className={className}>
@@ -58,8 +65,9 @@ function WordRow({
         <span
           key={i}
           className={lit[i] ? 'cell hl' : 'cell'}
-          onMouseEnter={() => onHover({ word, index: i })}
-          onMouseLeave={() => onHover(null)}
+          onMouseEnter={compact ? undefined : () => onHover({ word, index: i })}
+          onMouseLeave={compact ? undefined : () => onHover(null)}
+          onClick={compact ? () => onTap({ word, index: i }) : undefined}
         >
           {ch}
         </span>
@@ -81,6 +89,7 @@ const INITIAL: State = { pos: 0, tried: new Set<number>() };
 export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttempts, actions }: ToolProps<'modular-clock'>) {
   const modulus = mount.modulus;
   const [state, dispatch] = useReducer(reducer, INITIAL);
+  const compact = useCompactLayout();
   const dialRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ last: number; acc: number; start: number } | null>(null);
 
@@ -97,6 +106,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
   const used = useMemo(() => usedCipherLetters(cipherWords, owners, 0), [cipherWords, owners]);
   const target = useMemo(() => hoverTarget(cipherWords, owners, hover), [cipherWords, owners, hover]);
   const lit = useMemo(() => highlightedCells(cipherWords, owners, target), [cipherWords, owners, target]);
+  const onTap = (pos: CellPos) => setHover((cur) => tapCell(cipherWords, owners, cur, pos));
 
   useEffect(() => {
     onCandidate(restored);
@@ -214,13 +224,13 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
         <div className="words">
           {pairs.map((pair, i) => (
             <div key={i} className="word">
-              <WordRow className="word-cipher" text={pair.cipher} word={i} lit={lit[i] ?? []} onHover={setHover} />
-              <WordRow className="word-restored" text={pair.restored} word={i} lit={lit[i] ?? []} onHover={setHover} />
+              <WordRow className="word-cipher" text={pair.cipher} word={i} lit={lit[i] ?? []} onHover={setHover} onTap={onTap} compact={compact} />
+              <WordRow className="word-restored" text={pair.restored} word={i} lit={lit[i] ?? []} onHover={setHover} onTap={onTap} compact={compact} />
             </div>
           ))}
         </div>
         <p className={target ? 'hover-note on' : 'hover-note'} data-testid="hover-note">
-          {target ? restoreSentence(target.letter, k, modulus) : '電文の文字にマウスを重ねると、円盤の対応が光る'}
+          {target ? restoreSentence(target.letter, k, modulus) : compact ? '電文の文字をタップすると、円盤の対応が光る' : '電文の文字にマウスを重ねると、円盤の対応が光る'}
         </p>
       </section>
       {actions}

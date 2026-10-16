@@ -1,3 +1,4 @@
+import { useCompactLayout } from '../layout';
 import type { Stage } from '../stages/types';
 import { useIdleTimeout } from './useIdleTimeout';
 
@@ -12,7 +13,9 @@ interface NotesScreenProps {
 
 /** 「もっと知る」の解説画面。カード 4 枚を机の上の板として並べる。無操作 2 分で待機へ戻る */
 export function NotesScreen({ stage, onBack, onRestart }: NotesScreenProps) {
-  useIdleTimeout(IDLE_MS, onRestart);
+  // スマホ版は自分の端末で遊ぶので、自動では戻さない
+  const compact = useCompactLayout();
+  useIdleTimeout(IDLE_MS, onRestart, !compact);
 
   return (
     <main className="screen notes">
