@@ -8,6 +8,7 @@ import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from '
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { ownersOfWords } from './multiState';
+import { TurnButtons } from './TurnButtons';
 import type { ToolProps } from './types';
 
 /** ホイールを何ピクセルぶん回すと 1 目盛り進むか */
@@ -73,7 +74,7 @@ const INITIAL: State = { pos: 0, tried: new Set<number>() };
  * モジュラー時計盤（DESIGN.md §4）。
  *
  * 外周＝暗号文の文字（固定）、内周＝平文の文字（回る）。ずらし量 k のとき外周 X の内側に X−k が来る。
- * 回し方は ←→ ボタン・キーボードの ← →・円盤上のホイール・ドラッグ。
+ * 回し方は円盤の上半分の左右の回転ボタン（↺ −1・↻ +1）・キーボードの ← →・円盤上のホイール・ドラッグ。
  * 正解を知らない。戻した文を候補としてランナーへ返すだけで、判定はしない。
  * 全鍵を自動で試す機能は持たない（DESIGN.md §4）。
  */
@@ -164,50 +165,38 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
   return (
     <div className="tool">
       <section className="tool-dial" aria-label="時計盤">
-        <div
-          ref={dialRef}
-          className="dial-wrap"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerEnd}
-          onPointerCancel={onPointerEnd}
-        >
-          <Dial
-            labels={labels}
-            steps={state.pos}
-            marks={{ tried: state.tried, current: k }}
-            showWindow
-            highlight={target ? outerIndexOf(target.letter, modulus) : undefined}
+        <div className="dial-holder">
+          <div
+            ref={dialRef}
+            className="dial-wrap"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerEnd}
+            onPointerCancel={onPointerEnd}
           >
-            <text className="dial-hub-label" textAnchor="middle" y={-17}>
-              ずらし量
-            </text>
-            <text className="dial-hub-value" textAnchor="middle" dominantBaseline="central" y={8}>
-              {k}
-            </text>
-          </Dial>
+            <Dial
+              labels={labels}
+              steps={state.pos}
+              marks={{ tried: state.tried, current: k }}
+              showWindow
+              grip
+              highlight={target ? outerIndexOf(target.letter, modulus) : undefined}
+            >
+              <text className="dial-hub-label" textAnchor="middle" y={-17}>
+                ずらし量
+              </text>
+              <text className="dial-hub-value" textAnchor="middle" dominantBaseline="central" y={8}>
+                {k}
+              </text>
+            </Dial>
+          </div>
+          <TurnButtons onTurn={(delta) => dispatch({ type: 'move', delta, modulus })} />
         </div>
-        <DialLegend />
+        <DialLegend grip />
         <div className="dial-controls">
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => dispatch({ type: 'move', delta: -1, modulus })}
-            aria-label="1 つ戻す"
-          >
-            ← 戻す
-          </button>
           <p className="attempts">
             試した鍵 <strong>{triedCount}</strong> / {modulus}
           </p>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => dispatch({ type: 'move', delta: 1, modulus })}
-            aria-label="1 つ進める"
-          >
-            進める →
-          </button>
         </div>
       </section>
       <MappingStrip

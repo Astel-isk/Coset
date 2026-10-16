@@ -196,6 +196,42 @@ button.primary {
   transition: transform 0.18s ease-out;
 }
 
+/* つまみ: 内側の輪の縁を少し明るくし、縁に小さな角丸の突起を 3 つ付ける（輪と一緒に回る） */
+.dial-plate.grip {
+  stroke: var(--window-off);
+  stroke-width: 2.4;
+}
+
+.dial-grip {
+  fill: var(--window-off);
+}
+
+/* 回した向きの軌跡: 内側の輪の外縁に沿った朱の弧を、約 0.3 秒で薄くして消す */
+.dial-trail {
+  pointer-events: none;
+  animation: dial-trail-fade 0.3s ease-out forwards;
+}
+
+.dial-trail-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.dial-trail-head {
+  fill: var(--accent);
+}
+
+@keyframes dial-trail-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* 電文の文字に重ねたときの強調: 外周と内周の同じ角度の文字を、朱の帯で結ぶ */
 .dial-hl-band {
   fill: var(--accent);
@@ -377,6 +413,70 @@ button.primary {
   grid-column: 1;
   grid-row: 2 / span 5;
   align-self: start;
+}
+
+.dial-holder {
+  position: relative;
+}
+
+/* 回転ボタン: 円盤の上半分の左右（上から約 3 割の高さ）、円盤の外側の縁に寄せる。円盤の円には食い込ませない */
+.turn-btn {
+  --turn-in: calc(var(--dial) * 0.025);
+  position: absolute;
+  top: 27%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 44px;
+  height: 54px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.turn-btn.ccw {
+  right: calc(100% - var(--turn-in));
+}
+
+.turn-btn.cw {
+  left: calc(100% - var(--turn-in));
+}
+
+.turn-btn:hover {
+  border-color: var(--accent);
+}
+
+.turn-arrow {
+  display: block;
+  width: 32px;
+  height: 28px;
+}
+
+.turn-arc {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.turn-head {
+  fill: currentColor;
+}
+
+.turn-delta {
+  font: 700 0.8rem/1 var(--mono);
+  color: var(--sub);
+}
+
+.dial-grip-note {
+  margin-top: 0.2vh;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--sub);
 }
 
 .dial-wrap {
@@ -772,7 +872,7 @@ button.primary {
 .tool-dials {
   display: grid;
   grid-template-columns: repeat(3, var(--dial));
-  column-gap: 0.8rem;
+  column-gap: 1.7rem;
   align-self: start;
 }
 
@@ -787,8 +887,15 @@ button.primary {
 }
 
 /* 輪の名札は 3 枚の下に 1 つ */
-.tool-dials .dial-legend {
+.tool-dials .dial-legend,
+.tool-dials .dial-grip-note {
   grid-column: 1 / -1;
+}
+
+/* 小さい円盤では、ボタンを円盤の箱の外へ出し、隣の円盤の円にも触れないようにする */
+.multi-dial .turn-btn {
+  --turn-in: 0px;
+  top: 15%;
 }
 
 .multi-dial .attempts {
@@ -1464,6 +1571,10 @@ button.b-btn {
 
   .dial-inner {
     transition: none;
+  }
+
+  .dial-trail {
+    display: none;
   }
 
   .stamp {

@@ -11,6 +11,7 @@ import { highlightedCells, hoverTarget, outerIndexOf, usedCipherLetters } from '
 import type { CellPos } from './mapping';
 import { DialLegend, MappingStrip } from './MappingStrip';
 import { currentKeys, initialState, ownersOfWords, reducer, totalTried } from './multiState';
+import { TurnButtons } from './TurnButtons';
 import type { ToolProps } from './types';
 
 /** ホイールを何ピクセルぶん回すと 1 目盛り進むか */
@@ -73,7 +74,7 @@ function OwnedRow({
 /**
  * 円盤を複数枚並べた時計盤（ヴィジュネル暗号用）。1 枚が鍵の 1 文字ぶんを受け持つ。
  *
- * クリックした円盤、またはキーボードの 1・2・3… が操作対象。← →・ホイール・ドラッグは操作対象に効く
+ * クリックした円盤、またはキーボードの 1・2・3… が操作対象。回転ボタン（操作対象の円盤の上半分の左右）・← →・ホイール・ドラッグは操作対象に効く
  * （ホイールとドラッグは、触れた円盤を操作対象にしてから回す）。
  * 操作対象の円盤だけ読み取り窓を朱にし、電文の紙では、その円盤が受け持つ文字（count 文字おき）を濃く描く。
  * 戻した文は全円盤の鍵で復号した文全体を onCandidate で返す。
@@ -217,28 +218,32 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
               data-dial={d}
               aria-current={isActive ? 'true' : undefined}
             >
-              <div
-                className="dial-wrap"
-                onPointerDown={(e) => onPointerDown(e, d)}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerEnd}
-                onPointerCancel={onPointerEnd}
-              >
-                <Dial
-                  labels={labels}
-                  steps={state.pos[d] ?? 0}
-                  marks={{ tried: state.tried[d] ?? new Set<number>(), current: k }}
-                  showWindow
-                  active={isActive}
-                  highlight={target && target.owner === d ? outerIndexOf(target.letter, modulus) : undefined}
+              <div className="dial-holder">
+                <div
+                  className="dial-wrap"
+                  onPointerDown={(e) => onPointerDown(e, d)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerEnd}
+                  onPointerCancel={onPointerEnd}
                 >
-                  <text className="dial-hub-label" textAnchor="middle" y={-17}>
-                    {circled(d)} ずらし量
-                  </text>
-                  <text className="dial-hub-value" textAnchor="middle" dominantBaseline="central" y={8}>
-                    {k}
-                  </text>
-                </Dial>
+                  <Dial
+                    labels={labels}
+                    steps={state.pos[d] ?? 0}
+                    marks={{ tried: state.tried[d] ?? new Set<number>(), current: k }}
+                    showWindow
+                    active={isActive}
+                    grip={isActive}
+                    highlight={target && target.owner === d ? outerIndexOf(target.letter, modulus) : undefined}
+                  >
+                    <text className="dial-hub-label" textAnchor="middle" y={-17}>
+                      {circled(d)} ずらし量
+                    </text>
+                    <text className="dial-hub-value" textAnchor="middle" dominantBaseline="central" y={8}>
+                      {k}
+                    </text>
+                  </Dial>
+                </div>
+                {isActive ? <TurnButtons onTurn={(delta) => dispatch({ type: 'move', delta, modulus })} /> : null}
               </div>
               <p className="attempts" data-testid="attempts" data-dial={d + 1}>
                 {circled(d)} 試した鍵 <strong>{state.tried[d]?.size ?? 0}</strong> / {modulus}
@@ -246,28 +251,12 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
             </div>
           );
         })}
-        <DialLegend />
+        <DialLegend grip />
       </section>
       <div className="tool-controls">
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => dispatch({ type: 'move', delta: -1, modulus })}
-          aria-label="操作中の円盤を 1 つ戻す"
-        >
-          ← 戻す
-        </button>
         <p className="multi-target">
           操作中 <strong>{circled(active)}</strong>
         </p>
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => dispatch({ type: 'move', delta: 1, modulus })}
-          aria-label="操作中の円盤を 1 つ進める"
-        >
-          進める →
-        </button>
       </div>
       {hintWord !== null ? (
         <KeyCalculator
