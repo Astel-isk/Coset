@@ -78,7 +78,7 @@ const INITIAL: State = { pos: 0, tried: new Set<number>() };
  * 正解を知らない。戻した文を候補としてランナーへ返すだけで、判定はしない。
  * 全鍵を自動で試す機能は持たない（DESIGN.md §4）。
  */
-export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttempts }: ToolProps<'modular-clock'>) {
+export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttempts, actions }: ToolProps<'modular-clock'>) {
   const modulus = mount.modulus;
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const dialRef = useRef<HTMLDivElement>(null);
@@ -200,7 +200,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
         </div>
       </section>
       <MappingStrip
-        title="対応表（円盤を切り開いて伸ばしたもの）"
+        title="対応表"
         k={k}
         modulus={modulus}
         used={used}
@@ -223,6 +223,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
           {target ? restoreSentence(target.letter, k, modulus) : '電文の文字にマウスを重ねると、円盤の対応が光る'}
         </p>
       </section>
+      {actions}
     </div>
   );
 }

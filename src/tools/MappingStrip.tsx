@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { mappingColumns } from './mapping';
 
 interface MappingStripProps {
-  /** 見出し（ステージ 1: 「対応表（円盤を切り開いて伸ばしたもの）」、ステージ 2: 「② の対応表」） */
+  /** 見出し（ステージ 1: 「対応表」、ステージ 2: 「② の対応表」） */
   readonly title: string;
   /** 表にする円盤の今のずらし量（鍵） */
   readonly k: number;
@@ -69,27 +69,23 @@ export function MappingStrip({ title, k, modulus, used, highlight, dial, numbers
 }
 
 /**
- * 輪の名札: 外側と内側が何の文字かを、各輪の文字色の色見本付きで示す（円盤の下に出す）。
- * grip を渡すと（内側の輪をつまんで回せる円盤のとき）、その下に操作の 1 行を添える
+ * 輪の名札: 外側と内側が何の文字かを、各輪の文字色の色見本付きの 1 行で示す（円盤の下に出す。待機画面には出さない）。
+ * grip を渡すと（内側の輪をつまんで回せる円盤のとき）、内側の項目の末尾に「（つまんで回せる）」を添える
  */
 export function DialLegend({ grip = false }: { readonly grip?: boolean }) {
   return (
-    <>
-      <p className="dial-legend" data-testid="dial-legend">
-        <span className="legend-item">
-          <span className="swatch swatch-outer" aria-hidden="true" />
-          外側 = 暗号文の文字
-        </span>{' '}
-        <span className="legend-item">
-          <span className="swatch swatch-inner" aria-hidden="true" />
-          内側 = 平文の文字
-        </span>
-      </p>
-      {grip ? (
-        <p className="dial-grip-note" data-testid="dial-grip-note">
-          内側の輪をつまんで回せる
-        </p>
-      ) : null}
-    </>
+    <p className="dial-legend" data-testid="dial-legend">
+      <span className="legend-item">
+        <span className="swatch swatch-outer" aria-hidden="true" />
+        外側 = 暗号文
+      </span>{' '}
+      <span className="legend-sep" aria-hidden="true">
+        /
+      </span>{' '}
+      <span className="legend-item">
+        <span className="swatch swatch-inner" aria-hidden="true" />
+        内側 = 平文{grip ? '（つまんで回せる）' : ''}
+      </span>
+    </p>
   );
 }

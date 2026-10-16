@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { Given } from '../stages/types';
 
 /**
@@ -56,6 +56,12 @@ export interface ToolProps<K extends ToolId> {
    * 開始時のずらし量 0 は数えない（来場者が操作して止めた位置だけを数える）。
    */
   readonly onAttempts: (tried: number, total: number) => void;
+  /**
+   * 主ボタン（「これで解読」）と不正解の表示の差し込み口。ランナーが中身を作って渡し、ツールが電文の紙の直後に置く
+   * （電文の位置を知っているのはツールだけで、ランナーは位置を知らずに済む。EXHIBITION.md「画面の整理」）。
+   * 判定はランナーが行うので、ツールは中身に触れず、そのまま描くだけ
+   */
+  readonly actions: ReactNode;
 }
 
 /** ID からツールの実体を引くレジストリ。全 ToolId を埋めないと型検査が通らない */

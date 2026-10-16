@@ -80,7 +80,7 @@ function OwnedRow({
  * 戻した文は全円盤の鍵で復号した文全体を onCandidate で返す。
  * 正解を知らない。判定はしない。全鍵を自動で試す機能は持たない（DESIGN.md §4）。
  */
-export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, onAttempts }: ToolProps<'multi-clock'>) {
+export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, onAttempts, actions }: ToolProps<'multi-clock'>) {
   const { modulus, count } = mount;
   const [state, dispatch] = useReducer(reducer, count, initialState);
   const dialsRef = useRef<HTMLDivElement>(null);
@@ -251,12 +251,12 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
             </div>
           );
         })}
-        <DialLegend grip />
       </section>
       <div className="tool-controls">
         <p className="multi-target">
           操作中 <strong>{circled(active)}</strong>
         </p>
+        <DialLegend grip />
       </div>
       {hintWord !== null ? (
         <KeyCalculator
@@ -344,6 +344,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
           })}
         </div>
       </section>
+      {actions}
     </div>
   );
 }

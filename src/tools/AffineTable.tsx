@@ -61,7 +61,7 @@ function Row({
  * 戻せない a（26 と互いに素でない数）も選べて、そのときは対応表の重なりと警告、戻し先が決まらない文字の「?」で示す。
  * 正解を知らない。判定はしない。全鍵を自動で試す機能は持たない（DESIGN.md §4）。
  */
-export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, onAttempts }: ToolProps<'affine-table'>) {
+export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, onAttempts, actions }: ToolProps<'affine-table'>) {
   const { modulus } = mount;
   const [state, dispatch] = useReducer(affineReducer, undefined, initialAffineState);
   const { a, b } = state;
@@ -243,6 +243,7 @@ export function AffineTable({ mount, ciphertext, heading, givens, onCandidate, o
           })}
         </div>
       </section>
+      {actions}
     </div>
   );
 }

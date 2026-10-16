@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NormalizeRule } from '../stages/types';
-import { fillPlaceholders, isCorrect, normalizeText } from './logic';
+import { fillPlaceholders, foldedHintLabel, hintState, isCorrect, normalizeText } from './logic';
 
 const RULE: NormalizeRule = { ignoreCase: true, ignoreWhitespace: true, ignorePunctuation: true };
 
@@ -58,5 +58,20 @@ describe('fillPlaceholders', () => {
 
   it('クリア画面の総数も同じ仕組みで入る', () => {
     expect(fillPlaceholders('分ければ {total} 通りのうち', { total: '78' })).toBe('分ければ 78 通りのうち');
+  });
+});
+
+describe('hintState', () => {
+  it('開いた枚数より前は opened、次の 1 枚が ready、それ以降は locked', () => {
+    expect([0, 1, 2].map((i) => hintState(i, 0))).toEqual(['ready', 'locked', 'locked']);
+    expect([0, 1, 2].map((i) => hintState(i, 1))).toEqual(['opened', 'ready', 'locked']);
+    expect([0, 1, 2].map((i) => hintState(i, 3))).toEqual(['opened', 'opened', 'opened']);
+  });
+});
+
+describe('foldedHintLabel', () => {
+  it('開けるものは「▸」付き、まだ開けないものは理由付きの 1 行にする', () => {
+    expect(foldedHintLabel('手がかり', 'ready')).toBe('ヒント: 手がかり ▸');
+    expect(foldedHintLabel('答え', 'locked')).toBe('ヒント: 答え（前を開くと読める）');
   });
 });
