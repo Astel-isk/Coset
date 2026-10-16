@@ -99,14 +99,22 @@ export const vigenereStage: Stage = {
   title: 'ヴィジュネル暗号',
   arrival: { challengeLabel: '次の暗号に挑む', interceptHeadline: '新たな電文を傍受' },
   flavor: '新たに傍受した電文。鍵が 3 文字に増えた。円盤は 3 枚。1 枚ずつ合わせて、読める文を探せ。',
-  briefing:
-    'この暗号は、文字ごとに違う量をずらす方式。鍵は 3 文字で、1・4・7…文字目は 1 枚目、'
-    + '2・5・8…文字目は 2 枚目、3・6・9…文字目は 3 枚目の円盤だけで決まる。'
-    + '3 枚は互いに影響しないので、1 枚ずつ破れる。',
+  briefing: {
+    rule:
+      'ずらす量を 1 文字ごとに ① ② ③ の順で替え、①②③①②③… とくり返す。空白は数えない。3 つのずらし量が鍵',
+    exampleTitle: '例: 鍵 ① 3・② 1・③ 4 で NEKO を暗号にする',
+    steps: [
+      { disk: 1, plain: 'N(13)', formula: '13 + 3 = 16', cipher: 'Q' },
+      { disk: 2, plain: 'E(4)', formula: '4 + 1 = 5', cipher: 'F' },
+      { disk: 3, plain: 'K(10)', formula: '10 + 4 = 14', cipher: 'O' },
+      { disk: 1, plain: 'O(14)', formula: '14 + 3 = 17', cipher: 'R' },
+    ],
+    summary: 'NEKO → QFOR',
+  },
   givens: [],
   tools: [{ id: 'multi-clock', modulus: 26, count: KEY_LENGTH }],
   hints: [
-    { label: '手がかり', body: '鍵は 3 文字。電文の文字は 3 つおきに同じ円盤で戻る' },
+    { label: '手がかり', body: '最初の単語の 1 文字目は ① の円盤で戻る。まずそこだけ合わせてみよう' },
     {
       label: '仕組み',
       body:

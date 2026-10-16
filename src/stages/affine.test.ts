@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fillPlaceholders } from '../ui/logic';
 import { A_CHOICES, affineStage, MESSAGES } from './affine';
-import { decrypt, gcd } from './affineStub';
+import { decrypt, encrypt, gcd } from './affineStub';
 import { exhibitionStages } from './index';
 import { firstWord } from './vigenere';
 
@@ -160,5 +160,20 @@ describe('affineStage のデータ', () => {
     expect(affineStage.arrival).toEqual({ challengeLabel: '最後の暗号に挑む', interceptHeadline: '最後の電文を傍受' });
     expect(exhibitionStages[1]?.arrival?.challengeLabel).toBe('次の暗号に挑む');
     expect(exhibitionStages[0].arrival).toBeUndefined();
+  });
+});
+
+describe('affineStage.briefing（ステージ前の説明）', () => {
+  const { briefing } = affineStage;
+
+  it('例の行の暗号文の文字をつなげると、仮実装で NEKO を a=3, b=1 で暗号にした結果に一致し、まとめは「NEKO → それ」', () => {
+    const joined = briefing.steps.map((s) => s.cipher).join('');
+    expect(joined).toBe(encrypt('NEKO', 3, 1));
+    expect(briefing.summary).toBe(`NEKO → ${encrypt('NEKO', 3, 1)}`);
+  });
+
+  it('例の行は円盤の番号を持たず、規則に「a には使えない数がある」ことを書かない', () => {
+    for (const step of briefing.steps) expect(step.disk).toBeUndefined();
+    expect(briefing.rule).not.toContain('使えない');
   });
 });

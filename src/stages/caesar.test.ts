@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { alphabetTable, caesarStage, MESSAGES } from './caesar';
-import { decrypt } from './caesarStub';
+import { decrypt, encrypt } from './caesarStub';
 
 /** 再現できる擬似乱数（テスト用の線形合同法） */
 function seeded(seed: number): () => number {
@@ -98,5 +98,26 @@ describe('alphabetTable', () => {
     // 文字の列と番号の列が同じ幅（縦に揃う）
     expect(rows[0]?.length).toBe(rows[1]?.length);
     expect(rows[3]?.length).toBe(rows[4]?.length);
+  });
+});
+
+describe('caesarStage.briefing（ステージ前の説明）', () => {
+  const { briefing } = caesarStage;
+
+  it('例の行の暗号文の文字をつなげると、仮実装で NEKO を鍵 13 で暗号にした結果に一致し、まとめは「NEKO → それ」', () => {
+    const joined = briefing.steps.map((s) => s.cipher).join('');
+    expect(joined).toBe(encrypt('NEKO', 13));
+    expect(briefing.summary).toBe(`NEKO → ${encrypt('NEKO', 13)}`);
+  });
+
+  it('例の行は NEKO の 1 文字ずつで、平文の文字と番号が合い、円盤の番号は持たない', () => {
+    expect(briefing.steps.map((s) => s.plain)).toEqual(['N(13)', 'E(4)', 'K(10)', 'O(14)']);
+    for (const step of briefing.steps) expect(step.disk).toBeUndefined();
+  });
+
+  it('規則・例の見出しがあり、例の見出しに鍵 13 と NEKO がある', () => {
+    expect(briefing.rule).not.toBe('');
+    expect(briefing.exampleTitle).toContain('鍵 13');
+    expect(briefing.exampleTitle).toContain('NEKO');
   });
 });

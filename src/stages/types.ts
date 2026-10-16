@@ -129,6 +129,38 @@ export interface Arrival {
   readonly interceptHeadline: string;
 }
 
+/**
+ * ステージ前の説明の「例の行」1 行（簡易版。EXHIBITION.md「ステージ前の説明」）。
+ * 例の単語を 1 文字ずつ暗号にする行で、画面には「plain formula → cipher」の順に並べる。
+ * すべて表示用の文字列で、ランナーは並べて描くだけで計算しない。
+ */
+export interface BriefingStep {
+  /** 平文の文字と番号（例: `N(13)`） */
+  readonly plain: string;
+  /** 計算（例: `13 + 13 = 26 → −26 = 0`） */
+  readonly formula: string;
+  /** 暗号文の文字（例: `A`）。各行のこれをつなげると、まとめの暗号文になる */
+  readonly cipher: string;
+  /** 受け持つ円盤の番号（1〜3）。ステージ 2 だけが持ち、先頭に ①②③ を付けて色を変える */
+  readonly disk?: number;
+}
+
+/**
+ * ステージ前の説明（簡易版。EXHIBITION.md「ステージ前の説明」）。
+ * 説明するのは暗号にする規則だけ。例の鍵は本番と違う固定の値にして、答えは漏らさない。
+ * 解き方はヒント、教訓はクリア画面の対比の役目なので、ここには書かない。
+ */
+export interface Briefing {
+  /** 規則（1〜2 行） */
+  readonly rule: string;
+  /** 例の見出し（例: 例: 鍵 13 で NEKO を暗号にする） */
+  readonly exampleTitle: string;
+  /** 例の単語を 1 文字ずつ暗号にする行（1 文字 1 行） */
+  readonly steps: readonly BriefingStep[];
+  /** 例のまとめ（例: NEKO → ARXB） */
+  readonly summary: string;
+}
+
 export interface Stage {
   readonly id: StageId;
   /** 表示順。DESIGN.md §2 の表の番号に合わせる */
@@ -139,8 +171,8 @@ export interface Stage {
   readonly arrival?: Arrival;
   /** 短い世界観フレーバー（日本語） */
   readonly flavor: string;
-  /** 導入解説（日本語）。そのステージで何に気づかせるか */
-  readonly briefing: string;
+  /** ステージ前の説明（暗号にする規則と、固定の例）。解き方と教訓は書かない */
+  readonly briefing: Briefing;
   /** ステージ共通の与件。出題ごとに変わるものは Puzzle.givens に持たせる */
   readonly givens: readonly Given[];
   /** 装備する可視化ツール。実体は tools/ のレジストリが解決する */

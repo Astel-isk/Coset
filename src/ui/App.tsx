@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { exhibitionStages } from '../stages';
 import type { Stage } from '../stages/types';
+import { BriefingScreen } from './BriefingScreen';
 import { ClearScreen } from './ClearScreen';
 import { newGame } from './game';
 import type { Game } from './game';
@@ -19,6 +20,7 @@ interface ClearData {
 type Phase =
   | { readonly kind: 'idle'; readonly game: Game }
   | { readonly kind: 'intercept'; readonly game: Game; readonly gameId: number; readonly headline: string }
+  | { readonly kind: 'briefing'; readonly game: Game; readonly gameId: number }
   | { readonly kind: 'play'; readonly game: Game; readonly gameId: number }
   | ({ readonly kind: 'clear'; readonly revisited: boolean } & ClearData)
   | ({ readonly kind: 'notes' } & ClearData);
@@ -43,8 +45,8 @@ function nextStageOf(stage: Stage): Stage | undefined {
 }
 
 /**
- * ランナー。待機 → 傍受演出 → 解読 → クリア（⇄ もっと知る）→ 待機 を切り替える。
- * クリア後に次のステージがあれば、主ボタン（既定は「次の暗号に挑む」）で傍受演出 → 次のステージの解読へ進む。
+ * ランナー。待機 → 傍受演出 → 説明 → 解読 → クリア（⇄ もっと知る）→ 待機 を切り替える。
+ * クリア後に次のステージがあれば、主ボタン（既定は「次の暗号に挑む」）で傍受演出 → 説明 → 次のステージの解読へ進む。
  * 暗号方式は知らない。出題は stage.generate、操作は stage.tools が持つ。
  * 進行状況はどこにも保存しない（EXHIBITION.md）。
  */
@@ -78,7 +80,17 @@ export function App() {
           record={phase.game.record}
           ciphertext={phase.game.puzzle.ciphertext}
           headline={phase.headline}
+          onDone={() => setPhase({ kind: 'briefing', game: phase.game, gameId: phase.gameId })}
+        />
+      );
+    case 'briefing':
+      return (
+        <BriefingScreen
+          key={phase.gameId}
+          stage={phase.game.stage}
+          record={phase.game.record}
           onDone={() => setPhase({ kind: 'play', game: phase.game, gameId: phase.gameId })}
+          onRestart={restart}
         />
       );
     case 'play':

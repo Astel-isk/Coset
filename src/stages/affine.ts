@@ -62,10 +62,17 @@ export const affineStage: Stage = {
   title: 'アフィン暗号',
   arrival: { challengeLabel: '最後の暗号に挑む', interceptHeadline: '最後の電文を傍受' },
   flavor: '最後の電文。円盤はもう使えない。鍵は a と b の 2 つ。読める文を探せ。',
-  briefing:
-    'この暗号は、番号に a を掛けて b を足し、26 で割った余りを暗号文の文字にする方式。'
-    + '掛け算は文字の並び順そのものを入れ替えるので、円盤では表せない。'
-    + 'a には使えない数がある。',
+  briefing: {
+    rule: '文字の番号に a を掛けて b を足し、26 で割った余りの番号の文字にする。a と b の 2 つが鍵',
+    exampleTitle: '例: a = 3、b = 1 で NEKO を暗号にする',
+    steps: [
+      { plain: 'N(13)', formula: '3 × 13 + 1 = 40 → 余り 14', cipher: 'O' },
+      { plain: 'E(4)', formula: '3 × 4 + 1 = 13', cipher: 'N' },
+      { plain: 'K(10)', formula: '3 × 10 + 1 = 31 → 余り 5', cipher: 'F' },
+      { plain: 'O(14)', formula: '3 × 14 + 1 = 43 → 余り 17', cipher: 'R' },
+    ],
+    summary: 'NEKO → ONFR',
+  },
   givens: [],
   tools: [{ id: 'affine-table', modulus: 26 }],
   hints: [

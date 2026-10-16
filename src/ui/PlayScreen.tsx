@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useCompactLayout } from '../layout';
 import { ToolHost } from '../tools/ToolHost';
+import { BriefingDialog } from './BriefingDialog';
 import type { Game } from './game';
 import { fillPlaceholders, foldedHintLabel, hintState, isCorrect } from './logic';
 import { paperHead } from './record';
@@ -44,6 +45,8 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
   const [attempts, setAttempts] = useState({ tried: 0, total: 0 });
   const [openedHints, setOpenedHints] = useState(0);
   const [failed, setFailed] = useState(false);
+  // 「暗号の規則」のダイアログ。解読画面はマウントしたまま上に重ねるので、円盤・試した鍵・開いたヒントは保たれる
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   // スマホ版は自分の端末で遊ぶので、自動では戻さない
   const compact = useCompactLayout();
@@ -78,70 +81,76 @@ export function PlayScreen({ game, onSolved, onRestart }: PlayScreenProps) {
   );
 
   return (
-    <main className="screen play" data-tool={stage.tools[0]?.id}>
-      <header className="play-head">
-        <p className="record">
-          傍受記録 {record.no} ・ {stage.title}
-        </p>
-        <RestartButton onRestart={onRestart} />
-      </header>
+    <>
+      <main className="screen play" data-tool={stage.tools[0]?.id}>
+        <header className="play-head">
+          <p className="record">
+            傍受記録 {record.no} ・ {stage.title}
+          </p>
+          <RestartButton onRestart={onRestart} />
+          <button type="button" className="secondary rules" onClick={() => setRulesOpen(true)}>
+            暗号の規則
+          </button>
+        </header>
 
-      <p className="flavor">{stage.flavor}</p>
+        <p className="flavor">{stage.flavor}</p>
 
-      {stage.tools.map((mount) => (
-        <ToolHost
-          key={mount.id}
-          mount={mount}
-          ciphertext={puzzle.ciphertext}
-          heading={paperHead(record)}
-          givens={givens}
-          onCandidate={handleCandidate}
-          onAttempts={handleAttempts}
-          actions={actions}
-        />
-      ))}
+        {stage.tools.map((mount) => (
+          <ToolHost
+            key={mount.id}
+            mount={mount}
+            ciphertext={puzzle.ciphertext}
+            heading={paperHead(record)}
+            givens={givens}
+            onCandidate={handleCandidate}
+            onAttempts={handleAttempts}
+            actions={actions}
+          />
+        ))}
 
-      {givens.length > 0 ? (
-        <dl className="givens" aria-label="与件">
-          {givens.map((given) => (
-            <div key={given.label} className="given">
-              <dt>{given.label}</dt>
-              <dd>
-                <span className="mono">{given.value}</span>
-                {given.suffix ? ` ${given.suffix}` : ''}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
+        {givens.length > 0 ? (
+          <dl className="givens" aria-label="与件">
+            {givens.map((given) => (
+              <div key={given.label} className="given">
+                <dt>{given.label}</dt>
+                <dd>
+                  <span className="mono">{given.value}</span>
+                  {given.suffix ? ` ${given.suffix}` : ''}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
 
-      <section className="hints" aria-label="ヒント">
-        {stage.hints.map((hint, i) => {
-          const state = hintState(i, openedHints);
-          if (state === 'opened') {
-            const body = fillPlaceholders(hint.body, puzzle.hintValues);
-            // 開いたカードの幅は文の長さに比例させる（長い文のカードを広くして、並べたときの高さをそろえる）
+        <section className="hints" aria-label="ヒント">
+          {stage.hints.map((hint, i) => {
+            const state = hintState(i, openedHints);
+            if (state === 'opened') {
+              const body = fillPlaceholders(hint.body, puzzle.hintValues);
+              // 開いたカードの幅は文の長さに比例させる（長い文のカードを広くして、並べたときの高さをそろえる）
+              return (
+                <div key={hint.label} className="hint opened" style={{ flexGrow: hintGrow(hint.label, body) }}>
+                  <span className="hint-label">{hint.label}</span>
+                  <span className="hint-body">{body}</span>
+                </div>
+              );
+            }
+            if (state === 'ready') {
+              return (
+                <button key={hint.label} type="button" className="hint ready" onClick={() => setOpenedHints(i + 1)}>
+                  {foldedHintLabel(hint.label, state)}
+                </button>
+              );
+            }
             return (
-              <div key={hint.label} className="hint opened" style={{ flexGrow: hintGrow(hint.label, body) }}>
-                <span className="hint-label">{hint.label}</span>
-                <span className="hint-body">{body}</span>
+              <div key={hint.label} className="hint locked" aria-disabled="true">
+                {foldedHintLabel(hint.label, state)}
               </div>
             );
-          }
-          if (state === 'ready') {
-            return (
-              <button key={hint.label} type="button" className="hint ready" onClick={() => setOpenedHints(i + 1)}>
-                {foldedHintLabel(hint.label, state)}
-              </button>
-            );
-          }
-          return (
-            <div key={hint.label} className="hint locked" aria-disabled="true">
-              {foldedHintLabel(hint.label, state)}
-            </div>
-          );
-        })}
-      </section>
-    </main>
+          })}
+        </section>
+      </main>
+      {rulesOpen ? <BriefingDialog stage={stage} onClose={() => setRulesOpen(false)} /> : null}
+    </>
   );
 }

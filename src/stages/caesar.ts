@@ -109,9 +109,17 @@ export const caesarStage: Stage = {
   order: 1,
   title: 'シーザー暗号',
   flavor: '傍受した通信。文字が一定の規則でずれているらしい。円盤を回して、読める文を探せ。',
-  briefing:
-    'この暗号は、文字をアルファベット順に一定数ずらすだけの方式。ずらす量が鍵で、'
-    + '取りうる値は 26 通りしかない。鍵の候補を全部試せてしまう暗号は、それだけで破れる。',
+  briefing: {
+    rule: 'すべての文字を、アルファベット順に同じ数だけずらす。Z の次は A に戻る。ずらす量が鍵',
+    exampleTitle: '例: 鍵 13 で NEKO を暗号にする（A=0, B=1, …, Z=25 の番号で計算する）',
+    steps: [
+      { plain: 'N(13)', formula: '13 + 13 = 26 → −26 = 0', cipher: 'A' },
+      { plain: 'E(4)', formula: '4 + 13 = 17', cipher: 'R' },
+      { plain: 'K(10)', formula: '10 + 13 = 23', cipher: 'X' },
+      { plain: 'O(14)', formula: '14 + 13 = 27 → −26 = 1', cipher: 'B' },
+    ],
+    summary: 'NEKO → ARXB',
+  },
   givens: [],
   tools: [{ id: 'modular-clock', modulus: 26 }],
   hints: [

@@ -406,6 +406,169 @@ button.primary {
   font-size: 0.9rem;
 }
 
+/* ---- ステージ前の説明（EXHIBITION.md「ステージ前の説明」） ----
+ * 傍受演出と同じ机の上に紙を 1 枚置く。紙の上は 規則 → 例の見出し → 例の行（グリッドで縦に揃える）→ まとめ → 締め。
+ * 色は紙の色（--paper-ink / --paper-sub / --paper-faint）だけを使い、朱は主ボタンにだけ使う。
+ * ステージ 2 の ①②③ は、円盤の色分け（濃い・薄い。電文の .own / .dim と同じトークン）の 3 段階で描き分ける。
+ * 出ていない行は visibility: hidden で場所だけ取り、紙の大きさが途中で変わらないようにする。 */
+
+.briefing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4vh;
+}
+
+.briefing-head,
+.briefing-paper,
+.briefing-actions {
+  width: min(86vw, 52rem);
+}
+
+.briefing-head .record {
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+
+.briefing-paper {
+  padding: 2.4vh 2.2vw;
+}
+
+.briefing-title {
+  margin: 0 0 0.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px dashed var(--paper-rule);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+.briefing-rule {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.briefing-example-title {
+  margin-top: 1.2vh;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.briefing-steps {
+  list-style: none;
+  margin: 1vh 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+  justify-content: start;
+  align-items: start;
+  column-gap: 1em;
+  row-gap: 0.1em;
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.briefing-steps.has-disk {
+  grid-template-columns: auto auto auto auto auto;
+}
+
+/* 行の箱は作らず、中の 5 つ（ステージ 2 以外は 4 つ）をグリッドの列に直接並べる。visibility は子へ継承される */
+.briefing-step {
+  display: contents;
+  visibility: hidden;
+}
+
+.briefing-step.on {
+  visibility: visible;
+}
+
+.briefing-plain {
+  font-weight: 700;
+}
+
+.briefing-formula {
+  white-space: nowrap;
+}
+
+.briefing-arrow {
+  color: var(--paper-sub);
+}
+
+.briefing-cipher {
+  font-weight: 700;
+}
+
+.briefing-disk {
+  font-family: var(--sans);
+  font-size: 1.2em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.briefing-disk.disk-1 {
+  color: var(--paper-ink);
+}
+
+.briefing-disk.disk-2 {
+  color: var(--paper-sub);
+}
+
+.briefing-disk.disk-3 {
+  color: var(--paper-faint);
+}
+
+.briefing-summary {
+  margin-top: 1vh;
+  padding-top: 0.6vh;
+  border-top: 1px dashed var(--paper-rule);
+  font: 700 1.5rem/1.5 var(--mono);
+  letter-spacing: 0.08em;
+  visibility: hidden;
+}
+
+.briefing-summary.on {
+  visibility: visible;
+}
+
+.briefing-closing {
+  margin-top: 1.4vh;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.briefing-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 解読画面の上に重ねる「暗号の規則」。机の色を濃くして解読画面を沈める（影・グラデーションは使わない） */
+.briefing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  padding: 3vh 3vw;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: rgba(10, 16, 24, 0.9);
+}
+
+.briefing-dialog {
+  width: min(86vw, 52rem);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+}
+
+.briefing-dialog .briefing-paper,
+.briefing-dialog .briefing-actions {
+  width: 100%;
+}
+
 /* ---- 解読画面 ---- */
 
 .play {
@@ -439,6 +602,14 @@ button.primary {
 button.restart {
   flex: none;
   min-width: 13.6em;
+  min-height: 2.3rem;
+  padding: 0.1em 0.9em;
+  font-size: 0.9rem;
+}
+
+/* 「暗号の規則」: 「最初から」の隣の副ボタン。見直しのためのボタンで、押し間違えても失うものはない */
+button.rules {
+  flex: none;
   min-height: 2.3rem;
   padding: 0.1em 0.9em;
   font-size: 0.9rem;
@@ -1681,6 +1852,88 @@ button.b-btn {
 
   .intercept-status {
     font-size: 1.2rem;
+  }
+
+  /* ---- ステージ前の説明 ----
+   * 縦 1 列。例の行は横幅に収まらなければ計算の部分で折り返す。ボタンは画面の下の方に置き、44px 以上 */
+
+  .briefing {
+    justify-content: flex-start;
+    gap: 1rem;
+  }
+
+  .briefing-head,
+  .briefing-paper,
+  .briefing-actions {
+    width: 100%;
+  }
+
+  .briefing-paper {
+    padding: 1rem 0.9rem;
+  }
+
+  .briefing-title {
+    font-size: 1.3rem;
+  }
+
+  .briefing-rule,
+  .briefing-closing {
+    font-size: 1rem;
+  }
+
+  .briefing-example-title {
+    margin-top: 0.8rem;
+  }
+
+  .briefing-steps {
+    margin-top: 0.6rem;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    column-gap: 0.6em;
+    row-gap: 0.3em;
+    font-size: 1rem;
+  }
+
+  .briefing-steps.has-disk {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  }
+
+  .briefing-formula {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .briefing-summary {
+    margin-top: 0.6rem;
+    padding-top: 0.4rem;
+    font-size: 1.3rem;
+  }
+
+  .briefing-closing {
+    margin-top: 0.8rem;
+  }
+
+  .briefing .briefing-actions {
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+
+  .briefing-actions button {
+    flex: 1;
+    min-height: 48px;
+  }
+
+  .briefing-overlay {
+    padding: 0.9rem;
+  }
+
+  .briefing-dialog {
+    width: 100%;
+    max-width: 44rem;
+    gap: 0.8rem;
+  }
+
+  button.rules {
+    min-height: 44px;
   }
 
   /* ---- 解読画面 ----

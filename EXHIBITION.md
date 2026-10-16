@@ -360,7 +360,7 @@ DESIGN.md §2 の「なぜ a は 26 と互いに素でないとダメか」を�
   ランナー（`ui/App.tsx`・`ui/ClearScreen.tsx`）はこの文言を受け渡すだけで、ステージの順や暗号方式を知らない（`ClearScreen` は `nextLabel` を受け取り、無ければ次のステージなし）
 - ステージ前の説明は `Stage.briefing`（`Briefing`: 規則 `rule`・例の見出し `exampleTitle`・例の行 `steps`・まとめ `summary`）に持たせる。
   例の行 `BriefingStep` は平文の文字 `plain`（例 `N(13)`）・計算 `formula`（例 `13 + 13 = 26 → −26 = 0`）・暗号文の文字 `cipher`・任意の円盤の番号 `disk`（ステージ 2 だけ。1〜3）を持つ表示用の文字列で、
-  ランナー（`ui/BriefingScreen.tsx`・`ui/BriefingPaper.tsx`）は並べて描くだけで計算しない。各ステージのテストで、例の行の暗号文の文字をつなげたものが仮実装の暗号化の結果と一致することを確かめる。
+  ランナー（`ui/BriefingScreen.tsx`・`ui/BriefingPaper.tsx`、解読画面に重ねる `ui/BriefingDialog.tsx`、行の出し方の定数と純粋関数は `ui/briefing.ts`）は並べて描くだけで計算しない。各ステージのテストで、例の行の暗号文の文字をつなげたものが仮実装の暗号化の結果と一致することを確かめる。
   以前の `briefing`（導入解説の 1 文。画面では使っていなかった）はこれに置き換えた
 - 傍受演出（`ui/InterceptScreen.tsx`）は暗号文・記録・見出しの状態表示（例「受信中」）を受け取るだけで、暗号方式を知らない。
   打ち出しの間隔は `ui/intercept.ts` の `typingInterval(length)` が文字数から決める

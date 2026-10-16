@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fillPlaceholders } from '../ui/logic';
 import { firstWord, KEY_LENGTH, MESSAGES, vigenereStage } from './vigenere';
-import { decrypt } from './vigenereStub';
+import { decrypt, encrypt } from './vigenereStub';
 
 /** 再現できる擬似乱数（テスト用の線形合同法） */
 function seeded(seed: number): () => number {
@@ -147,5 +147,23 @@ describe('ステージ 2 の定義', () => {
     expect(body).toContain('暗号文 − 平文 = 鍵（26 で割った余り）');
     expect(body).toContain('最初の単語の 1 文字目で引き算すれば ① の鍵が出る');
     expect(body).toContain('鍵の計算機');
+  });
+});
+
+describe('vigenereStage.briefing（ステージ前の説明）', () => {
+  const { briefing } = vigenereStage;
+
+  it('例の行の暗号文の文字をつなげると、仮実装で NEKO を鍵 [3, 1, 4] で暗号にした結果に一致し、まとめは「NEKO → それ」', () => {
+    const joined = briefing.steps.map((s) => s.cipher).join('');
+    expect(joined).toBe(encrypt('NEKO', [3, 1, 4]));
+    expect(briefing.summary).toBe(`NEKO → ${encrypt('NEKO', [3, 1, 4])}`);
+  });
+
+  it('例の行の円盤の番号は ① ② ③ ① の順で、1〜3 の範囲', () => {
+    expect(briefing.steps.map((s) => s.disk)).toEqual([1, 2, 3, 1]);
+  });
+
+  it('手がかりのヒントは、ステージ前の説明と重ならない「最初の単語の 1 文字目は ① の円盤で戻る」', () => {
+    expect(vigenereStage.hints[0].body).toBe('最初の単語の 1 文字目は ① の円盤で戻る。まずそこだけ合わせてみよう');
   });
 });
