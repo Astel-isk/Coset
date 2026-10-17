@@ -1073,18 +1073,19 @@ button.hint.ready {
 }
 
 /* ---- 解読画面（円盤が複数枚のツール） ----
- * 円盤を左に横並びにし、右に 鍵の計算機と「操作中・名札」、下段に 対応表・電文の紙・主ボタンの行・ヒントを置く。
+ * 円盤を左に横並びにしてその下に「操作中・名札」、右に 鍵の計算機、下段に 対応表・電文の紙・主ボタンの行・ヒントを置く。
  * 主ボタンの行（act）は、右端に「これで解読」と不正解の表示、左端に与件。
  * 方式ごとの分岐ではなく、ツールの ID（data-tool）で配置を切り替える。 */
 
 .play[data-tool='multi-clock'] {
-  --dial: min(max(28vh, calc(36vh - min(60px, 3.13rem))), 17.2vw);
+  /* ヒントを全部開いても 1366×768・1280×720 で下が切れないよう、高さ由来の大きさを 2vh ぶん控える（2026 年 10 月 17 日） */
+  --dial: min(max(26vh, calc(34vh - min(60px, 3.13rem))), 17.2vw);
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: repeat(7, auto);
   grid-template-areas:
     'head flv'
     'dials calc'
-    'dials ctl'
+    'ctl calc'
     'map map'
     'paper paper'
     'act act'
@@ -1101,10 +1102,11 @@ button.hint.ready {
   grid-area: dials;
 }
 
-/* 操作中の円盤と、輪の名札。円盤の右の列の下に置く */
+/* 操作中の円盤と、輪の名札。円盤の下に置く（右の列の計算機の下に置くと、右の列が円盤より長くなり、
+ * 1366×768・1280×720 でヒントの行が画面の下で切れていた。2026 年 10 月 17 日に移動） */
 .play[data-tool='multi-clock'] .tool-controls {
   grid-area: ctl;
-  align-self: end;
+  align-self: start;
   flex-wrap: wrap;
   column-gap: 1.6rem;
 }
