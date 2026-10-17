@@ -11,23 +11,22 @@ interface ClearScreenProps {
   readonly game: Game;
   readonly tried: number;
   readonly total: number;
-  /** 「もっと知る」から戻ってきたか。戻ったときは判子を押し直さない */
+  /** 解説画面の「結果に戻る」から戻ってきたか。戻ったときは判子を押し直さない */
   readonly revisited: boolean;
-  /** 次のステージへ進む主ボタンの文言（例: 次の暗号に挑む、最後の暗号に挑む）。次のステージがなければ undefined で、「次の人へ」が主ボタンになる */
-  readonly nextLabel?: string;
-  /** 次のステージへ進む主ボタン。次のステージの傍受演出へ進む */
-  readonly onNext: () => void;
-  /** 「もっと知る」を開く */
-  readonly onMore: () => void;
+  /** 「解説を読む」。解説画面（もっと知る）へ進む。次の操作は解説画面に置く（全員に解説を見せるため） */
+  readonly onNotes: () => void;
+  /** 無操作が続いたときに待機へ戻す */
   readonly onRestart: () => void;
 }
 
-/** クリア画面。左に解読した電文（判子つき）、右に試した鍵の数と強い暗号との対比を見せる */
-export function ClearScreen({ game, tried, total, revisited, nextLabel, onNext, onMore, onRestart }: ClearScreenProps) {
-  // スマホ版は自分の端末で遊ぶので、自動では戻さない。「次の人へ」は「もう一度遊ぶ」にする
+/**
+ * クリア画面。左に解読した電文（判子つき）、右に試した鍵の数と強い暗号との対比を見せる。
+ * ボタンは「解説を読む」だけ。次のステージへ進むか・次の人へ渡すかは解説画面で選ぶ
+ */
+export function ClearScreen({ game, tried, total, revisited, onNotes, onRestart }: ClearScreenProps) {
+  // スマホ版は自分の端末で遊ぶので、自動では戻さない
   const compact = useCompactLayout();
   useIdleTimeout(IDLE_MS, onRestart, !compact);
-  const restartLabel = compact ? 'もう一度遊ぶ' : '次の人へ';
   const { stage, puzzle, record } = game;
   const { debrief } = stage;
   const values = { total: String(total) };
@@ -60,22 +59,8 @@ export function ClearScreen({ game, tried, total, revisited, nextLabel, onNext, 
         </dl>
         <p className="closing">{debrief.closing}</p>
         <div className="clear-actions">
-          {nextLabel !== undefined ? (
-            <>
-              <button type="button" className="primary" onClick={onNext}>
-                {nextLabel}
-              </button>
-              <button type="button" className="secondary" onClick={onRestart}>
-                {restartLabel}
-              </button>
-            </>
-          ) : (
-            <button type="button" className="primary" onClick={onRestart}>
-              {restartLabel}
-            </button>
-          )}
-          <button type="button" className="secondary" onClick={onMore}>
-            もっと知る
+          <button type="button" className="primary" onClick={onNotes}>
+            解説を読む
           </button>
         </div>
       </section>

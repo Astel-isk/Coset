@@ -10,7 +10,7 @@ import { InterceptScreen } from './InterceptScreen';
 import { NotesScreen } from './NotesScreen';
 import { PlayScreen } from './PlayScreen';
 
-/** クリア画面の内容。「もっと知る」から戻ったときに同じ画面を出せるよう、解説画面の間も保持する */
+/** クリア画面の内容。解説画面の「結果に戻る」で同じ画面を出せるよう、解説画面の間も保持する */
 interface ClearData {
   readonly game: Game;
   readonly tried: number;
@@ -28,7 +28,7 @@ type Phase =
 /**
  * 傍受演出の見出し（状態表示）。待機からの最初の演出は「受信中」。
  * 次のステージの前は、そのステージのデータ（Stage.arrival）の文言を使い、なければ既定の「新たな電文を傍受」
- * （クリア画面の主ボタンも同様に、既定は「次の暗号に挑む」）。
+ * （解説画面の主ボタンも同様に、既定は「次の暗号に挑む」）。
  */
 const INTERCEPT_HEADLINE = '受信中';
 const DEFAULT_NEXT_HEADLINE = '新たな電文を傍受';
@@ -45,8 +45,8 @@ function nextStageOf(stage: Stage): Stage | undefined {
 }
 
 /**
- * ランナー。待機 → 傍受演出 → 説明 → 解読 → クリア（⇄ もっと知る）→ 待機 を切り替える。
- * クリア後に次のステージがあれば、主ボタン（既定は「次の暗号に挑む」）で傍受演出 → 説明 → 次のステージの解読へ進む。
+ * ランナー。待機 → 傍受演出 → 説明 → 解読 → クリア → 解説（もっと知る。全員に見せる）→ 待機 を切り替える。
+ * 解説画面で次のステージがあれば、主ボタン（既定は「次の暗号に挑む」）で傍受演出 → 説明 → 次のステージの解読へ進む。
  * 暗号方式は知らない。出題は stage.generate、操作は stage.tools が持つ。
  * 進行状況はどこにも保存しない（EXHIBITION.md）。
  */
@@ -105,14 +105,22 @@ export function App() {
           onRestart={restart}
         />
       );
-    case 'clear': {
-      const next = nextStageOf(phase.game.stage);
+    case 'clear':
       return (
         <ClearScreen
           game={phase.game}
           tried={phase.tried}
           total={phase.total}
           revisited={phase.revisited}
+          onNotes={() => setPhase({ kind: 'notes', game: phase.game, tried: phase.tried, total: phase.total })}
+          onRestart={restart}
+        />
+      );
+    case 'notes': {
+      const next = nextStageOf(phase.game.stage);
+      return (
+        <NotesScreen
+          stage={phase.game.stage}
           nextLabel={next ? (next.arrival?.challengeLabel ?? DEFAULT_NEXT_LABEL) : undefined}
           onNext={() => {
             if (!next) return;
@@ -125,20 +133,12 @@ export function App() {
               headline: next.arrival?.interceptHeadline ?? DEFAULT_NEXT_HEADLINE,
             });
           }}
-          onMore={() => setPhase({ kind: 'notes', game: phase.game, tried: phase.tried, total: phase.total })}
-          onRestart={restart}
-        />
-      );
-    }
-    case 'notes':
-      return (
-        <NotesScreen
-          stage={phase.game.stage}
           onBack={() =>
             setPhase({ kind: 'clear', game: phase.game, tried: phase.tried, total: phase.total, revisited: true })
           }
           onRestart={restart}
         />
       );
+    }
   }
 }

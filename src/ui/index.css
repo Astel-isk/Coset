@@ -1725,7 +1725,7 @@ button.b-btn {
   animation: none;
 }
 
-/* ---- 解説画面（もっと知る） ---- */
+/* ---- 解説画面（もっと知る。クリア画面の次に必ず通す） ---- */
 
 .notes {
   display: flex;
@@ -1749,8 +1749,15 @@ button.b-btn {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  /* 上の段は中身の高さに合わせ、残りを下の段に回す（ステージ 1 の 1 枚目の図が、下に次の操作の行を置いても切れないように） */
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 1.6vh 1.6vw;
+}
+
+/* 次の操作。カードを読み終えた位置（右下）に置き、主ボタンを右端にする */
+.notes-actions {
+  justify-content: flex-end;
+  margin-top: 0;
 }
 
 .note {
