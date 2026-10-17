@@ -28,7 +28,8 @@ interface GripGateOptions<T> {
 
 /**
  * 円盤のドラッグの入り口。スマホ版のタッチだけ、長押しでつまむまでドラッグを始めない（longPress.ts の判定）。
- * マウス・ペンと、スマホ版でない画面のタッチは、今までどおり押してすぐドラッグを始める。
+ * マウス・ペンと、スマホ版でない画面のタッチは、今までどおり押してすぐドラッグを始める。どちらも、つまんでいる間は held が true になる
+ * （内側の輪の縁とつまみを明るくする合図。2026 年 10 月 17 日に PC 版にも広げた）。
  *
  * つまんでいる間はページをスクロールさせない。touch-action（スマホ版は pan-y）だけでは、スクロールが始まった後に止められないため、
  * window に非 passive の touchmove を付け、つまんでいる間だけ preventDefault する。指を動かさないうちにつまむ設計なので、
@@ -93,7 +94,9 @@ export function useGripGate<T>({ enabled, onStart, onMove, onEnd }: GripGateOpti
           if (stateRef.current.phase === 'pinched') pinch();
         }, HOLD_MS);
       } else {
+        // マウス・ペン（PC 版）はすぐつまむ。つまんでいる間の明るい縁はスマホ版と同じに出す（振動はしない）
         stateRef.current = IDLE;
+        setHeld(true);
         handlers.current.onStart(info);
       }
     },
