@@ -1760,6 +1760,11 @@ button.b-btn {
   margin-top: 0;
 }
 
+/* カードが 5 枚のとき（ステージ 3）、5 枚目は下の段に 1 枚だけ残る。行を空けず幅いっぱいに置く */
+.note:nth-child(5):last-child {
+  grid-column: 1 / -1;
+}
+
 .note {
   min-height: 0;
   overflow: hidden;

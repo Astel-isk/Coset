@@ -146,8 +146,15 @@ describe('affineStage のデータ', () => {
     expect(affineStage.debrief.closing).toBe('円盤では回せない暗号も、式にすれば解ける');
   });
 
-  it('「もっと知る」のカードは 4 枚で、すべて見出しと本文がある', () => {
-    expect(affineStage.notes).toHaveLength(4);
+  it('「もっと知る」のカードは 5 枚で、すべて見出しと本文がある', () => {
+    expect(affineStage.notes).toHaveLength(5);
+    expect(affineStage.notes.map((c) => c.title)).toEqual([
+      '掛け算の暗号',
+      '使える a は 12 個',
+      '割り算の代わりに逆元',
+      'RSA へ',
+      '並べ替える暗号',
+    ]);
     for (const card of affineStage.notes) {
       expect(card.title).not.toBe('');
       expect(card.body).not.toBe('');

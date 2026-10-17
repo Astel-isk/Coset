@@ -58,8 +58,8 @@ export interface NoteCard {
   readonly figure?: readonly string[];
 }
 
-/** 解説カードは 4 枚そろっていること */
-export type NoteSet = readonly [NoteCard, NoteCard, NoteCard, NoteCard];
+/** 解説カードは 4 枚以上そろっていること（4 枚を下限とし、ステージごとに足してよい。ステージ 3 は 5 枚） */
+export type NoteSet = readonly [NoteCard, NoteCard, NoteCard, NoteCard, ...NoteCard[]];
 
 /** 平文を比較するときの正規化規則（DESIGN.md §3 が実装時に定めるとしていたぶん） */
 export interface NormalizeRule {
