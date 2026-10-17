@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useCompactLayout } from '../layout';
 import { halves } from './mapping';
-import { affineColumns, clashExample, clashingColumns, clashWarning, isInvertible } from './affine';
+import { affineColumns, clashExample, clashExampleColumns, clashingColumns, clashWarning, isInvertible } from './affine';
 
 interface AffineStripProps {
   /** 今の a・b */
@@ -16,7 +16,10 @@ interface AffineStripProps {
 
 /**
  * 対応表（暗号化の向き）: 上の行が平文の A〜Z と番号、下の行が (a × 番号 + b) を 26 で割った余りの文字。
- * 下の行で同じ文字に重なった列は朱の枠で囲み、その下に警告を出す（a が 26 と互いに素でないとき）。
+ * 下の行で同じ文字に重なった列は枠で囲み、その下に警告を出す（a が 26 と互いに素でないとき）。
+ * 枠のうち朱にするのは、警告の文が名指しする 2 列（例: A と N）だけで、残りは灰にする。
+ * 朱の 2 列は下を括弧で結び、「この 2 つが同じ文字になった」と絵で分かるようにする
+ * （すべてを朱で囲むと、どの列とどの列が組なのかが出ないうえ、画面じゅうが朱になって主ボタンが埋もれるため）。
  * 表示は渡された (a, b) から毎回作り、状態を持たない。ツールは正解を知らない。
  * スマホ版は幅が足りないので、13 列 × 2 段に折り返す（0〜12 の段の下に 13〜25 の段）。
  */
@@ -24,14 +27,17 @@ export function AffineStrip({ a, b, modulus, used, highlight }: AffineStripProps
   const compact = useCompactLayout();
   const columns = affineColumns(a, b, modulus);
   const clash = clashingColumns(columns);
-  const invertible = isInvertible(a, modulus);
+  const example = clashExampleColumns(a, b, modulus);
   const flags = (cipher: string, index: number): string[] => {
     const f = [used.has(cipher) ? 'used' : 'unused'];
-    if (clash.has(index)) f.push('clash');
+    if (clash.has(index)) f.push(example.includes(index) ? 'clash clash-eg' : 'clash');
     if (cipher === highlight) f.push('hl');
     return f;
   };
-  const example = invertible ? null : clashExample(a, b, modulus);
+  const invertible = isInvertible(a, modulus);
+  // 例の 2 列を結ぶ括弧。スマホ版は対応表を 13 列ずつ 2 段に折るので、離れた 2 列を結べない（枠と文だけで示す）
+  const [tieFrom, tieTo] = compact ? [] : example;
+  const exampleText = invertible ? null : clashExample(a, b, modulus);
   return (
     <section className="mapping affine-strip" aria-label="対応表" data-testid="affine-strip">
       <p className="mapping-title">
@@ -70,11 +76,19 @@ export function AffineStrip({ a, b, modulus, used, highlight }: AffineStripProps
               {c.cipher}
             </span>
           ))}
+          {tieFrom !== undefined && tieTo !== undefined ? (
+            <span
+              className="clash-tie"
+              style={{ gridColumn: `${tieFrom + 2} / ${tieTo + 3}` }}
+              data-testid="clash-tie"
+              aria-hidden="true"
+            />
+          ) : null}
         </div>
       ))}
       <p className="affine-warn" role="status" data-testid="affine-warning">
         {invertible ? '' : clashWarning(a)}
-        {example ? <span className="affine-warn-eg">（{example}）</span> : null}
+        {exampleText ? <span className="affine-warn-eg">（{exampleText}）</span> : null}
       </p>
     </section>
   );

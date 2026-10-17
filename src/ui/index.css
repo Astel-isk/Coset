@@ -5,8 +5,9 @@
  * 色の約束: 朱（--accent）は 押すべきもの・見るべきもの・今選んでいるもの にだけ使う。具体的には
  * 主ボタン（これで解読）・円盤の読み取り窓と対応表の A の列の枠・判子・回した向きの軌跡・
  * 電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ列と今の手順の番号・
- * アフィン暗号の選択中の a と、戻せない a で重なった列の枠。
+ * アフィン暗号の選択中の a と、戻せない a で重なりの例に挙げた 2 列の枠・その 2 列を結ぶ括弧（2026/10/18。残りの重なった列は灰の枠）。
  * 開いたヒントの見出し・円盤の現在の鍵の目盛り・回転ボタンのホバーの枠には使わない（2026/10/16 に絞った。主ボタンを埋もれさせないため）。
+ * 朱を地にして上に文字を載せるところだけ、少し濃い --accent-fill を使う（2026/10/18。生成りの文字が読める濃さにするため。下の :root）。
  * 灰色の補足の文（フレーバー・注記・案内・計算機の目的と例など）は、大きさ --note-size と色 --note-color の 1 種類にそろえる。
  * 平面的に描く（グラデーション・影・発光を使わない）。
  */
@@ -28,6 +29,12 @@
   --paper-rule: #c9bfa8;
   /* 朱（唯一の色） */
   --accent: #d6452b;
+  /*
+   * 朱を地にして上に文字を載せるとき（主ボタン・選んでいる a・光らせた文字）の濃いほう。
+   * --accent の上の生成りは 3.76:1 しかなく、画面が小さく rem が縮むと（文字が 18px 未満）読みにくい。
+   * 4.61:1 まで上げた。線・枠・判子・弧は --accent のままにする（暗い机の上では濃くすると沈むため）
+   */
+  --accent-fill: #c03a24;
   /* 円盤が複数枚のとき、操作対象でない円盤の読み取り窓（灰） */
   --window-off: #5f7490;
   /* 灰色の補足の文（フレーバー・注記・案内・計算機の目的と例など）。大きさと色はここで 1 種類に決める。紙の上では色だけ下で差し替える */
@@ -100,8 +107,8 @@ button:focus-visible {
 
 button.primary {
   color: var(--paper);
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   font-weight: 700;
   padding: 0.45em 2em;
 }
@@ -257,14 +264,14 @@ button.primary {
   }
 }
 
-/* 電文の文字に重ねたときの強調: 外周と内周の同じ角度の文字を、朱の帯で結ぶ */
+/* 電文の文字に重ねたときの強調: 外周と内周の同じ角度の文字を、朱の帯で結ぶ（文字を載せるので濃いほうの朱） */
 .dial-hl-band {
-  fill: var(--accent);
+  fill: var(--accent-fill);
 }
 
 .dial-hl-letter {
   font: 700 14px var(--mono);
-  fill: #fff;
+  fill: var(--paper);
 }
 
 /* ---- 待機画面 ---- */
@@ -335,7 +342,7 @@ button.primary {
   margin-top: 4vh;
   padding: 0.45em 2em;
   color: var(--paper);
-  background: var(--accent);
+  background: var(--accent-fill);
   border-radius: 6px;
   font-size: 1.4rem;
   font-weight: 700;
@@ -660,10 +667,22 @@ button.primary {
 
 .play {
   --dial: min(70vh, 44vw);
+  /*
+   * 回転ボタン（円盤の上半分の左右）の寸法。円盤の外へ --turn-w − --turn-in だけはみ出すので、
+   * ボタンのある解読画面だけ、その分を左右の余白に足してウィンドウの端に張り付かないようにする（下の padding-inline）。
+   * --turn-in（円盤の内側へ入り込ませる量）をこれ以上大きくすると、外周の外の目盛り（試した鍵）に重なる
+   */
+  --turn-w: min(44px, 2.3rem);
+  --turn-h: min(54px, 2.82rem);
+  --turn-in: calc(var(--dial) * 0.025);
   display: grid;
   grid-template-columns: var(--dial) minmax(0, 1fr);
-  grid-template-rows: auto auto auto auto auto 1fr;
-  /* 見出し・円盤・フレーバー・対応表・電文の紙・主ボタン・ヒント。ステージ 2・3 はツールの ID（data-tool）で並べ替える */
+  /*
+   * 見出し・円盤・フレーバー・対応表・電文の紙・主ボタン・ヒント。ステージ 2・3 はツールの ID（data-tool）で並べ替える。
+   * 余った高さは電文の紙の行（1fr）に回す。右の列を上に寄せると、左の円盤の列より背が低くなって右下が大きく空くため。
+   * 紙は机の上の物なので、縦に伸びても「大きい紙」に見える（文字は紙の中で縦中央に置く。.words）
+   */
+  grid-template-rows: auto auto auto 1fr auto auto;
   grid-template-areas:
     'head head'
     'dial flv'
@@ -674,6 +693,12 @@ button.primary {
   column-gap: 3vw;
   row-gap: 0.9vh;
   padding-block: 2.2vh;
+}
+
+/* 円盤のある画面は、回転ボタンのはみ出す分を左右の余白に足す（ボタンの外側が本文の左端にそろう） */
+.play[data-tool='modular-clock'],
+.play[data-tool='multi-clock'] {
+  padding-inline: calc(3vw + var(--turn-w) - var(--turn-in));
 }
 
 /* 見出しの行: 記録番号・ステージ名と、その右隣の「最初から」 */
@@ -737,7 +762,6 @@ button.restart.armed {
 
 /* 回転ボタン: 円盤の上半分の左右（上から約 3 割の高さ）、円盤の外側の縁に寄せる。円盤の円には食い込ませない */
 .turn-btn {
-  --turn-in: calc(var(--dial) * 0.025);
   position: absolute;
   top: 27%;
   display: flex;
@@ -745,8 +769,8 @@ button.restart.armed {
   align-items: center;
   justify-content: center;
   gap: 1px;
-  width: min(44px, 2.3rem);
-  height: min(54px, 2.82rem);
+  width: var(--turn-w);
+  height: var(--turn-h);
   min-height: 0;
   padding: 0;
   border-radius: 14px;
@@ -882,8 +906,8 @@ button.restart.armed {
 }
 
 .map-num.hl {
-  color: #fff;
-  background: var(--accent);
+  color: var(--paper);
+  background: var(--accent-fill);
 }
 
 .map-top.used {
@@ -908,9 +932,9 @@ button.restart.armed {
 }
 
 .map-cell.hl {
-  color: #fff;
+  color: var(--paper);
   font-weight: 700;
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 
 .hover-note {
@@ -959,11 +983,16 @@ button.restart.armed {
 
 .tool-text {
   grid-area: paper;
+  display: flex;
+  flex-direction: column;
 }
 
+/* 紙が縦に伸びたとき、語の塊は紙の中で縦中央に置く（上端に張り付かせない） */
 .words {
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
+  align-content: center;
   gap: 0.8vh 1.6rem;
 }
 
@@ -1031,9 +1060,10 @@ button.restart.armed {
   flex: none;
   margin: 0;
   min-height: 2.1rem;
-  padding: 0.15em 0.8em;
+  /* 3 つを 1 行に畳んだまま収めるための大きさ（円盤の回転ボタンの分だけ右の列が狭いため）。1024×600 でも折り返さない */
+  padding: 0.15em 0.7em;
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1.4;
   white-space: nowrap;
   border: 2px solid var(--line);
@@ -1081,7 +1111,8 @@ button.hint.ready {
   /* ヒントを全部開いても 1366×768・1280×720 で下が切れないよう、高さ由来の大きさを 2vh ぶん控える（2026 年 10 月 17 日） */
   --dial: min(max(26vh, calc(34vh - min(60px, 3.13rem))), 17.2vw);
   grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: repeat(7, auto);
+  /* 余った高さは電文の紙の行に回す（ステージ 1 と同じ） */
+  grid-template-rows: auto auto auto auto 1fr auto auto;
   grid-template-areas:
     'head flv'
     'dials calc'
@@ -1244,9 +1275,9 @@ button.hint.ready {
 }
 
 .calc-step.now .step-no {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
+  color: var(--paper);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
 }
 
 .step-text {
@@ -1394,8 +1425,8 @@ button:disabled:hover {
 /* 電文の文字に重ねたときの強調（各段とも）と、計算機に選んだ列（中の文字は白）。操作対象の濃淡・列の薄い地より優先する */
 .words .word .cell.hl,
 .words .word .cell.sel {
-  color: #fff;
-  background: var(--accent);
+  color: var(--paper);
+  background: var(--accent-fill);
   border-radius: 3px;
 }
 
@@ -1406,7 +1437,8 @@ button:disabled:hover {
 
 .play[data-tool='affine-table'] {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  grid-template-rows: repeat(6, auto);
+  /* 余った高さは電文の紙の行に回す（ステージ 1 と同じ） */
+  grid-template-rows: auto auto auto 1fr auto auto;
   grid-template-areas:
     'head head'
     'ctl calc'
@@ -1515,9 +1547,9 @@ button.a-btn {
 
 /* 選んでいる a は朱で示す（どの a が使えるかは示さない。それは対応表の重なりで確かめる） */
 button.a-btn.sel {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
+  color: var(--paper);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
 }
 
 button.b-btn {
@@ -1546,7 +1578,7 @@ button.b-btn {
   font-size: 0.75rem;
 }
 
-/* 対応表（アフィン）: 上の行が平文（強い色）、下の行が暗号文（弱い色）。重なった列は朱の枠で囲む */
+/* 対応表（アフィン）: 上の行が平文（強い色）、下の行が暗号文（弱い色）。重なった列は枠で囲む（朱は例の 2 列だけ） */
 .map-cell.aff-plain.used {
   color: var(--paper);
 }
@@ -1557,20 +1589,48 @@ button.b-btn {
 
 .map-cell.aff-plain.hl,
 .map-cell.aff-cipher.hl {
-  color: #fff;
+  color: var(--paper);
 }
 
+/*
+ * 重なった列の枠。朱にするのは警告の文が名指しする 2 列（.clash-eg）だけで、残りは灰にする。
+ * a = 2 では 26 列すべてが重なるので、全部を朱にすると画面じゅうが朱になり、主ボタンが埋もれる
+ */
 .map-cell.clash {
+  border-left-color: var(--window-off);
+  border-right-color: var(--window-off);
+}
+
+.aff-plain.clash {
+  border-top-color: var(--window-off);
+}
+
+.aff-cipher.clash {
+  border-bottom-color: var(--window-off);
+}
+
+.map-cell.clash-eg {
   border-left-color: var(--accent);
   border-right-color: var(--accent);
 }
 
-.aff-plain.clash {
+.aff-plain.clash-eg {
   border-top-color: var(--accent);
 }
 
-.aff-cipher.clash {
+.aff-cipher.clash-eg {
   border-bottom-color: var(--accent);
+}
+
+/*
+ * 例の 2 列を結ぶ括弧（⊔）。暗号文の行のすぐ下に置き、左右の脚が 2 列の中心へ立ち上がる。
+ * 「この 2 つの平文が、同じ 1 文字になった」を線で示すためのもの
+ */
+.clash-tie {
+  height: 0.4rem;
+  margin-inline: calc(var(--map-col) / 2);
+  border: 2px solid var(--accent);
+  border-top: none;
 }
 
 .affine-warn {
@@ -2089,6 +2149,19 @@ button.b-btn {
       'dial'
       'act'
       'hints';
+  }
+
+  /* スマホ版は回転ボタンを円盤の下に置くので、左右に足した分は戻す */
+  .play[data-tool='modular-clock'],
+  .play[data-tool='multi-clock'] {
+    padding-inline: 0.9rem;
+  }
+
+  /* スマホ版は縦に流すので、行の高さは中身まかせにする（紙を伸ばさない） */
+  .play,
+  .play[data-tool='multi-clock'],
+  .play[data-tool='affine-table'] {
+    grid-template-rows: none;
   }
 
   .play[data-tool='multi-clock'] {

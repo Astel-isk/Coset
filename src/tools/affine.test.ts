@@ -3,6 +3,7 @@ import { decrypt, encrypt } from '../stages/affineStub';
 import {
   affineColumns,
   clashExample,
+  clashExampleColumns,
   clashingColumns,
   clashWarning,
   hoverSentence,
@@ -80,6 +81,38 @@ describe('clashingColumns', () => {
   it('26 と互いに素でない a（偶数と 13）は、b が何でも必ず重なる', () => {
     for (const a of [2, 4, 6, 8, 10, 12, 13, 14, 16, 18, 20, 22, 24]) {
       for (const b of [0, 1, 25]) expect(clashingColumns(affineColumns(a, b)).size).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('clashExampleColumns', () => {
+  it('戻せない a では、A の列と、同じ暗号文になるもう 1 列を返す', () => {
+    expect(clashExampleColumns(2, 0)).toEqual([0, 13]);
+    expect(clashExampleColumns(2, 3)).toEqual([0, 13]);
+    expect(clashExampleColumns(13, 0)).toEqual([0, 2]);
+  });
+
+  it('戻せる a では空', () => {
+    for (const a of COPRIME) expect(clashExampleColumns(a, 9)).toEqual([]);
+  });
+
+  it('返す 2 列は、どちらも重なった列に入っている', () => {
+    for (const a of [2, 4, 13, 18, 24]) {
+      const cols = clashExampleColumns(a, 7);
+      const clash = clashingColumns(affineColumns(a, 7));
+      expect(cols).toHaveLength(2);
+      for (const i of cols) expect(clash.has(i)).toBe(true);
+    }
+  });
+
+  it('返す 2 列の暗号文は同じ文字で、警告の文が名指しする文字と一致する', () => {
+    for (const a of [2, 4, 13, 18, 24]) {
+      const cols = affineColumns(a, 7);
+      const [x, y] = clashExampleColumns(a, 7);
+      expect(cols[x ?? 0]?.cipher).toBe(cols[y ?? 0]?.cipher);
+      expect(clashExample(a, 7)).toBe(
+        `たとえば ${cols[x ?? 0]?.plain} と ${cols[y ?? 0]?.plain} は、どちらも ${cols[x ?? 0]?.cipher} になる`,
+      );
     }
   });
 });
