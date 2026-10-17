@@ -539,6 +539,73 @@ button.primary {
   visibility: visible;
 }
 
+/* ステージ 3 だけ: 例（見出し・行・まとめ）と a・b の役割の図を左右に並べ、紙を広げる。図は行の出現とは別に最初から出す。
+ * 図に朱は使わない（紙の色のトークンだけ）。ステージ 1・2 は図がなく、.briefing-body は箱として何も変えない */
+.briefing.wide .briefing-head,
+.briefing.wide .briefing-paper,
+.briefing.wide .briefing-actions {
+  width: min(92vw, 66rem);
+}
+
+.briefing-body.has-figure {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 2.4rem;
+  align-items: start;
+}
+
+.briefing-figure {
+  margin: 1.2vh 0 0;
+  min-width: 0;
+}
+
+.briefing-figure-scroll {
+  overflow-x: auto;
+}
+
+.briefing-figure-table {
+  border-collapse: collapse;
+  font: 1rem/1.5 var(--mono);
+}
+
+.briefing-figure-table th,
+.briefing-figure-table td {
+  padding: 0.1em 0.45em;
+  text-align: center;
+  border-bottom: 1px dashed var(--paper-rule);
+}
+
+.briefing-figure-table tr:last-child th,
+.briefing-figure-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.briefing-figure-table th {
+  padding-left: 0;
+  text-align: left;
+  font-weight: 400;
+  color: var(--paper-sub);
+  white-space: nowrap;
+}
+
+/* 平文と暗号の行だけ太字にして、上から下へ「文字 → 文字」と読めるようにする */
+.briefing-figure-table tr:first-child td,
+.briefing-figure-table tr:last-child td {
+  font-weight: 700;
+}
+
+.briefing-figure-caption {
+  margin-top: 0.6vh;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.briefing-guide {
+  margin-top: 1.4vh;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 .briefing-closing {
   margin-top: 1.4vh;
   font-size: 1rem;
@@ -568,6 +635,10 @@ button.primary {
   display: flex;
   flex-direction: column;
   gap: 2vh;
+}
+
+.briefing-dialog.wide {
+  width: min(92vw, 66rem);
 }
 
 .briefing-dialog .briefing-paper,
@@ -1870,7 +1941,10 @@ button.b-btn {
 
   .briefing-head,
   .briefing-paper,
-  .briefing-actions {
+  .briefing-actions,
+  .briefing.wide .briefing-head,
+  .briefing.wide .briefing-paper,
+  .briefing.wide .briefing-actions {
     width: 100%;
   }
 
@@ -1903,8 +1977,10 @@ button.b-btn {
     grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   }
 
+  /* 折り返すのは空白の位置だけにする（「余り」の途中で切らない。「→ 余り 14」はデータ側で改行しない空白でつないである） */
   .briefing-formula {
     white-space: normal;
+    word-break: keep-all;
     overflow-wrap: anywhere;
   }
 
@@ -1912,6 +1988,28 @@ button.b-btn {
     margin-top: 0.6rem;
     padding-top: 0.4rem;
     font-size: 1.3rem;
+  }
+
+  .briefing-body.has-figure {
+    display: block;
+  }
+
+  .briefing-figure {
+    margin-top: 1rem;
+  }
+
+  /* 図が横幅に収まらないときは、図の中だけ横に流す（ページは横スクロールさせない） */
+  .briefing-figure-table {
+    font-size: 0.95rem;
+  }
+
+  .briefing-figure-caption,
+  .briefing-guide {
+    font-size: 0.95rem;
+  }
+
+  .briefing-guide {
+    margin-top: 0.8rem;
   }
 
   .briefing-closing {
@@ -1932,7 +2030,8 @@ button.b-btn {
     padding: 0.9rem;
   }
 
-  .briefing-dialog {
+  .briefing-dialog,
+  .briefing-dialog.wide {
     width: 100%;
     max-width: 44rem;
     gap: 0.8rem;

@@ -58,7 +58,7 @@ export function BriefingDialog({ stage, onClose }: BriefingDialogProps) {
         if (e.target instanceof Element && !e.target.closest('.briefing-paper, button')) onClose();
       }}
     >
-      <div className="briefing-dialog">
+      <div className={stage.briefing.figure ? 'briefing-dialog wide' : 'briefing-dialog'}>
         <BriefingPaper stage={stage} animate={false} titleId={TITLE_ID} />
         <div className="briefing-actions">
           <button type="button" className="secondary" ref={closeRef} onClick={onClose}>

@@ -153,6 +153,11 @@ describe('ステージ 2 の定義', () => {
 describe('vigenereStage.briefing（ステージ前の説明）', () => {
   const { briefing } = vigenereStage;
 
+  it('図と探し方の 1 行は持たない（ステージ 3 だけ）', () => {
+    expect(briefing.figure).toBeUndefined();
+    expect(briefing.guide).toBeUndefined();
+  });
+
   it('例の行の暗号文の文字をつなげると、仮実装で NEKO を鍵 [3, 1, 4] で暗号にした結果に一致し、まとめは「NEKO → それ」', () => {
     const joined = briefing.steps.map((s) => s.cipher).join('');
     expect(joined).toBe(encrypt('NEKO', [3, 1, 4]));

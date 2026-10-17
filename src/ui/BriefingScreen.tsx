@@ -55,7 +55,7 @@ export function BriefingScreen({ stage, record, onDone, onRestart }: BriefingScr
   }, [advance]);
 
   return (
-    <main className="screen briefing" data-testid="briefing-screen">
+    <main className={stage.briefing.figure ? 'screen briefing wide' : 'screen briefing'} data-testid="briefing-screen">
       <header className="briefing-head">
         <p className="record">傍受記録 {record.no} ・ 解読の手引き</p>
       </header>

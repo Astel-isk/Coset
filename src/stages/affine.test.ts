@@ -172,6 +172,43 @@ describe('affineStage.briefing（ステージ前の説明）', () => {
     expect(briefing.summary).toBe(`NEKO → ${encrypt('NEKO', 3, 1)}`);
   });
 
+  describe('図（a と b の役割）', () => {
+    const figure = affineStage.briefing.figure;
+    const row = (label: string): readonly string[] => figure?.rows.find((r) => r.label === label)?.cells ?? [];
+
+    it('6 行 × 10 列で、行の名前は 平文・番号・×3・+1・余り・暗号 の順', () => {
+      expect(figure?.rows.map((r) => r.label)).toEqual(['平文', '番号', '×3', '+1', '余り', '暗号']);
+      for (const r of figure?.rows ?? []) expect(r.cells).toHaveLength(10);
+    });
+
+    it('各列が整合している（番号 = 列の index、×3 = 3×番号、+1 = ×3 + 1、余り = (+1) を 26 で割った余り）', () => {
+      for (let i = 0; i < 10; i++) {
+        expect(Number(row('番号')[i])).toBe(i);
+        expect(Number(row('×3')[i])).toBe(3 * i);
+        expect(Number(row('+1')[i])).toBe(3 * i + 1);
+        expect(Number(row('余り')[i])).toBe((3 * i + 1) % 26);
+      }
+    });
+
+    it('平文の行は A〜J、暗号の行は仮実装の encrypt で ABCDEFGHIJ を a=3, b=1 で暗号化した結果と一致する', () => {
+      expect(row('平文').join('')).toBe('ABCDEFGHIJ');
+      expect(row('暗号').join('')).toBe(encrypt('ABCDEFGHIJ', 3, 1));
+    });
+
+    it('暗号の行は余りの行の番号の文字になっている', () => {
+      for (let i = 0; i < 10; i++) {
+        expect(row('暗号')[i]).toBe(String.fromCharCode(65 + Number(row('余り')[i])));
+      }
+    });
+
+    it('図の下の 1 行と探し方の 1 行に「使えない」を書かない（ヒントの手がかりで確かめる発見のため）', () => {
+      expect(figure?.caption).not.toBe('');
+      expect(figure?.caption).not.toContain('使えない');
+      expect(affineStage.briefing.guide).toBeDefined();
+      expect(affineStage.briefing.guide).not.toContain('使えない');
+    });
+  });
+
   it('例の行は円盤の番号を持たず、規則に「a には使えない数がある」ことを書かない', () => {
     for (const step of briefing.steps) expect(step.disk).toBeUndefined();
     expect(briefing.rule).not.toContain('使えない');

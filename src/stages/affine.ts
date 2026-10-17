@@ -66,14 +66,28 @@ export const affineStage: Stage = {
   briefing: {
     rule: '文字の番号に a を掛けて b を足し、26 で割った余りの番号の文字にする。a と b の 2 つが鍵',
     numbering: NUMBERING_NOTE,
+    figure: {
+      rows: [
+        { label: '平文', cells: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] },
+        { label: '番号', cells: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+        { label: '×3', cells: ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27'] },
+        { label: '+1', cells: ['1', '4', '7', '10', '13', '16', '19', '22', '25', '28'] },
+        { label: '余り', cells: ['1', '4', '7', '10', '13', '16', '19', '22', '25', '2'] },
+        { label: '暗号', cells: ['B', 'E', 'H', 'K', 'N', 'Q', 'T', 'W', 'Z', 'C'] },
+      ],
+      caption: 'a は飛び幅（A, B, C… が 3 つおきに並び替わる）、b は全体のずらし（シーザーと同じ）',
+    },
     exampleTitle: '例: a = 3、b = 1 で NEKO を暗号にする',
+    // 「→ 余り 14」は折り返しで分かれないよう、間を改行しない空白（\u00a0）でつなぐ（スマホ版）
     steps: [
-      { plain: 'N(13)', formula: '3 × 13 + 1 = 40 → 余り 14', cipher: 'O' },
+      { plain: 'N(13)', formula: '3 × 13 + 1 = 40 →\u00a0余り\u00a014', cipher: 'O' },
       { plain: 'E(4)', formula: '3 × 4 + 1 = 13', cipher: 'N' },
-      { plain: 'K(10)', formula: '3 × 10 + 1 = 31 → 余り 5', cipher: 'F' },
-      { plain: 'O(14)', formula: '3 × 14 + 1 = 43 → 余り 17', cipher: 'R' },
+      { plain: 'K(10)', formula: '3 × 10 + 1 = 31 →\u00a0余り\u00a05', cipher: 'F' },
+      { plain: 'O(14)', formula: '3 × 14 + 1 = 43 →\u00a0余り\u00a017', cipher: 'R' },
     ],
     summary: 'NEKO → ONFR',
+    guide:
+      'a をボタンで選び、b を ← → で動かす。対応表は暗号にする向き（上が平文、下が暗号文）なので、電文の文字を下の段で探して上を読む',
   },
   givens: [],
   tools: [{ id: 'affine-table', modulus: 26 }],

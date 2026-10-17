@@ -145,6 +145,25 @@ export interface BriefingStep {
   readonly disk?: number;
 }
 
+/** ステージ前の説明の図の 1 行（例: 行の名前 `×3` と、各列のセル `0`, `3`, `6`, …）。すべて表示用の文字列 */
+export interface BriefingFigureRow {
+  /** 行の名前（例: 平文・番号・×3・+1・余り・暗号） */
+  readonly label: string;
+  /** 各列のセル。どの行も同じ数を持つ */
+  readonly cells: readonly string[];
+}
+
+/**
+ * ステージ前の説明の図（簡易版。ステージ 3 の a と b の役割。EXHIBITION.md「ステージ前の説明」）。
+ * 行の名前付きの表で、1 列が平文の 1 文字ぶんの変わり方。ランナーは並べて描くだけで計算しない。
+ */
+export interface BriefingFigure {
+  /** 表の行。上から順に並べる */
+  readonly rows: readonly BriefingFigureRow[];
+  /** 表の下に添える 1 行 */
+  readonly caption: string;
+}
+
 /**
  * ステージ前の説明（簡易版。EXHIBITION.md「ステージ前の説明」）。
  * 説明するのは暗号にする規則だけ。例の鍵は本番と違う固定の値にして、答えは漏らさない。
@@ -155,12 +174,16 @@ export interface Briefing {
   readonly rule: string;
   /** 文字を番号に置き換える決まりの 1 行。例の行の `N(13)` が何を表すかを言う（stages/numbering.ts） */
   readonly numbering: string;
+  /** 図（任意。ステージ 3 だけ。a と b の役割）。例の行と並べて見せる */
+  readonly figure?: BriefingFigure;
   /** 例の見出し（例: 例: 鍵 13 で NEKO を暗号にする） */
   readonly exampleTitle: string;
   /** 例の単語を 1 文字ずつ暗号にする行（1 文字 1 行） */
   readonly steps: readonly BriefingStep[];
   /** 例のまとめ（例: NEKO → ARXB） */
   readonly summary: string;
+  /** 探し方の 1 行（任意。ステージ 3 だけ）。まとめの後、締めの前に出す。解き方そのものは書かない */
+  readonly guide?: string;
 }
 
 export interface Stage {
