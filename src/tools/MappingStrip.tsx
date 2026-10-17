@@ -75,9 +75,10 @@ export function MappingStrip({ title, k, modulus, used, highlight, dial, numbers
 
 /**
  * 輪の名札: 外側と内側が何の文字かを、各輪の文字色の色見本付きの 1 行で示す（円盤の下に出す。待機画面には出さない）。
- * grip を渡すと（内側の輪をつまんで回せる円盤のとき）、内側の項目の末尾に「（つまんで回せる）」を添える
+ * grip を渡すと（内側の輪をつまんで回せる円盤のとき）、内側の項目の末尾に「（つまんで回せる）」を添える。
+ * compact（スマホ版）では、タッチは長押しでつまんでから回すので「（長押しでつまんで回せる）」にする
  */
-export function DialLegend({ grip = false }: { readonly grip?: boolean }) {
+export function DialLegend({ grip = false, compact = false }: { readonly grip?: boolean; readonly compact?: boolean }) {
   return (
     <p className="dial-legend" data-testid="dial-legend">
       <span className="legend-item">
@@ -89,7 +90,7 @@ export function DialLegend({ grip = false }: { readonly grip?: boolean }) {
       </span>{' '}
       <span className="legend-item">
         <span className="swatch swatch-inner" aria-hidden="true" />
-        内側 = 平文{grip ? '（つまんで回せる）' : ''}
+        内側 = 平文{grip ? (compact ? '（長押しでつまんで回せる）' : '（つまんで回せる）') : ''}
       </span>
     </p>
   );

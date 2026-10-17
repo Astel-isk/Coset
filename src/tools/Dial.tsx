@@ -35,6 +35,10 @@ interface DialProps {
    * あわせて、steps が変わった直後に回った向きの朱の弧を 0.3 秒ほど出して消す（動きを減らす設定では出さない）
    */
   readonly grip?: boolean;
+  /**
+   * 指でつまんでいる最中か（スマホ版の長押し。指を離すまで true）。true なら、内側の輪の縁とつまみを一段明るくする（朱は使わない）
+   */
+  readonly held?: boolean;
   /** 円盤の中央に重ねる SVG 要素 */
   readonly children?: ReactNode;
 }
@@ -84,7 +88,7 @@ function trailShape(dir: 1 | -1, span: number): { readonly arc: string; readonly
  * 内周を k 目盛り回すと、外周の文字 X の内側に X−k の文字が来る。
  * 外周の外の目盛りのうち、鍵 k の目盛りは外周の文字 A+k（添字 k の文字）と同じ向きに置く。
  */
-export function Dial({ labels, steps, marks, showWindow = false, active = true, highlight, grip = false, children }: DialProps) {
+export function Dial({ labels, steps, marks, showWindow = false, active = true, highlight, grip = false, held = false, children }: DialProps) {
   const n = labels.length;
   const stepDeg = 360 / n;
   // 回した向きの軌跡。steps が変わったその描画で、回った量と向きを覚える（表示は CSS のアニメーションで消え、終わったら外す）
@@ -97,7 +101,7 @@ export function Dial({ labels, steps, marks, showWindow = false, active = true, 
   const shape = trail ? trailShape(trail.delta > 0 ? 1 : -1, Math.min(TRAIL_MAX_SPAN, TRAIL_MIN_SPAN + Math.abs(trail.delta) * stepDeg)) : null;
   return (
     <svg
-      className="dial"
+      className={held ? 'dial held' : 'dial'}
       viewBox={`${-VIEW} ${-VIEW} ${VIEW * 2} ${VIEW * 2}`}
       role="img"
       aria-label="二重リングの円盤"

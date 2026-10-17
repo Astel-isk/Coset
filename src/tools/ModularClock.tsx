@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { PointerEvent } from 'react';
 import { useCompactLayout } from '../layout';
 import { decrypt } from '../stages/caesarStub'; // core/ciphers/caesar.ts の実装後にここを差し替える
 import { ALPHABET, mod, normalizeAngleDelta, pairWords } from './clock';
@@ -13,6 +12,7 @@ import { RestoredBar } from './RestoredBar';
 import { barSegments } from './barText';
 import { TurnButtons } from './TurnButtons';
 import type { ToolProps } from './types';
+import { useGripGate } from './useGripGate';
 
 /** ホイールを何ピクセルぶん回すと 1 目盛り進むか */
 const WHEEL_PX_PER_STEP = 50;
@@ -153,28 +153,32 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
     return () => el.removeEventListener('wheel', onWheel);
   }, [modulus]);
 
-  // ドラッグ。円盤の中心まわりの角度の変化を目盛りに直す（時計回りで鍵が増える）
-  const pointerAngle = (e: PointerEvent<HTMLDivElement>): number => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const dx = e.clientX - (rect.left + rect.width / 2);
-    const dy = e.clientY - (rect.top + rect.height / 2);
+  // ドラッグ。円盤の中心まわりの角度の変化を目盛りに直す（時計回りで鍵が増える）。
+  // スマホ版のタッチは、長押しでつまんでから回す（useGripGate。マウスは押してすぐ回せる）
+  const pointerAngle = (el: HTMLElement, x: number, y: number): number => {
+    const rect = el.getBoundingClientRect();
+    const dx = x - (rect.left + rect.width / 2);
+    const dy = y - (rect.top + rect.height / 2);
     return (Math.atan2(dy, dx) * 180) / Math.PI;
   };
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { last: pointerAngle(e), acc: 0, start: state.pos };
-  };
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const angle = pointerAngle(e);
-    drag.acc += normalizeAngleDelta(angle - drag.last);
-    drag.last = angle;
-    dispatch({ type: 'set', pos: drag.start + Math.round(drag.acc / (360 / modulus)), modulus });
-  };
-  const onPointerEnd = () => {
-    dragRef.current = null;
-  };
+  const grip = useGripGate<null>({
+    enabled: compact,
+    onStart: ({ el, pointerId, x, y }) => {
+      el.setPointerCapture(pointerId);
+      dragRef.current = { last: pointerAngle(el, x, y), acc: 0, start: state.pos };
+    },
+    onMove: (el, x, y) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const angle = pointerAngle(el, x, y);
+      drag.acc += normalizeAngleDelta(angle - drag.last);
+      drag.last = angle;
+      dispatch({ type: 'set', pos: drag.start + Math.round(drag.acc / (360 / modulus)), modulus });
+    },
+    onEnd: () => {
+      dragRef.current = null;
+    },
+  });
 
   return (
     <div className="tool">
@@ -183,10 +187,8 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
           <div
             ref={dialRef}
             className="dial-wrap"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerEnd}
-            onPointerCancel={onPointerEnd}
+            data-held={grip.held}
+            {...grip.bind(null)}
           >
             <Dial
               labels={labels}
@@ -194,6 +196,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
               marks={{ tried: state.tried, current: k }}
               showWindow
               grip
+              held={grip.held}
               highlight={target ? outerIndexOf(target.letter, modulus) : undefined}
             >
               <text className="dial-hub-label" textAnchor="middle" y={-17}>
@@ -206,7 +209,7 @@ export function ModularClock({ mount, ciphertext, heading, onCandidate, onAttemp
           </div>
           <TurnButtons onTurn={(delta) => dispatch({ type: 'move', delta, modulus })} />
         </div>
-        <DialLegend grip />
+        <DialLegend grip compact={compact} />
         <div className="dial-controls">
           <p className="attempts">
             試した鍵 <strong>{triedCount}</strong> / {modulus}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { PointerEvent } from 'react';
 import { useCompactLayout } from '../layout';
 import { decrypt } from '../stages/vigenereStub'; // core/ciphers/vigenere.ts の実装後にここを差し替える
 import { ALPHABET, normalizeAngleDelta, pairWords } from './clock';
@@ -16,6 +15,7 @@ import { RestoredBar } from './RestoredBar';
 import { barSegments } from './barText';
 import { TurnButtons } from './TurnButtons';
 import type { ToolProps } from './types';
+import { useGripGate } from './useGripGate';
 
 /** ホイールを何ピクセルぶん回すと 1 目盛り進むか */
 const WHEEL_PX_PER_STEP = 50;
@@ -201,29 +201,33 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
     return () => el.removeEventListener('wheel', onWheel);
   }, [modulus]);
 
-  // ドラッグ。押した円盤を操作対象にし、その中心まわりの角度の変化を目盛りに直す（時計回りで鍵が増える）
-  const pointerAngle = (e: PointerEvent<HTMLDivElement>): number => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const dx = e.clientX - (rect.left + rect.width / 2);
-    const dy = e.clientY - (rect.top + rect.height / 2);
+  // ドラッグ。押した円盤を操作対象にし、その中心まわりの角度の変化を目盛りに直す（時計回りで鍵が増える）。
+  // スマホ版のタッチは、長押しでつまんでから（操作対象をその円盤に切り替えて）回す（useGripGate。マウスは押してすぐ回せる）
+  const pointerAngle = (el: HTMLElement, x: number, y: number): number => {
+    const rect = el.getBoundingClientRect();
+    const dx = x - (rect.left + rect.width / 2);
+    const dy = y - (rect.top + rect.height / 2);
     return (Math.atan2(dy, dx) * 180) / Math.PI;
   };
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>, dial: number) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dispatch({ type: 'select', dial });
-    dragRef.current = { last: pointerAngle(e), acc: 0, start: state.pos[dial] ?? 0 };
-  };
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const angle = pointerAngle(e);
-    drag.acc += normalizeAngleDelta(angle - drag.last);
-    drag.last = angle;
-    dispatch({ type: 'set', pos: drag.start + Math.round(drag.acc / (360 / modulus)), modulus });
-  };
-  const onPointerEnd = () => {
-    dragRef.current = null;
-  };
+  const grip = useGripGate<number>({
+    enabled: compact,
+    onStart: ({ el, pointerId, x, y, tag: dial }) => {
+      el.setPointerCapture(pointerId);
+      dispatch({ type: 'select', dial });
+      dragRef.current = { last: pointerAngle(el, x, y), acc: 0, start: state.pos[dial] ?? 0 };
+    },
+    onMove: (el, x, y) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const angle = pointerAngle(el, x, y);
+      drag.acc += normalizeAngleDelta(angle - drag.last);
+      drag.last = angle;
+      dispatch({ type: 'set', pos: drag.start + Math.round(drag.acc / (360 / modulus)), modulus });
+    },
+    onEnd: () => {
+      dragRef.current = null;
+    },
+  });
 
   return (
     <div className="tool tool-multi">
@@ -257,10 +261,8 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
               <div className="dial-holder">
                 <div
                   className="dial-wrap"
-                  onPointerDown={(e) => onPointerDown(e, d)}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerEnd}
-                  onPointerCancel={onPointerEnd}
+                  data-held={grip.held && isActive}
+                  {...grip.bind(d)}
                 >
                   <Dial
                     labels={labels}
@@ -269,6 +271,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
                     showWindow
                     active={isActive}
                     grip={isActive}
+                    held={grip.held && isActive}
                     highlight={target && target.owner === d ? outerIndexOf(target.letter, modulus) : undefined}
                   >
                     <text className="dial-hub-label" textAnchor="middle" y={-17}>
@@ -294,7 +297,7 @@ export function MultiClock({ mount, ciphertext, heading, givens, onCandidate, on
             操作中 <strong>{circled(active)}</strong>
           </p>
         )}
-        <DialLegend grip />
+        <DialLegend grip compact={compact} />
       </div>
       {hintWord !== null ? (
         <KeyCalculator

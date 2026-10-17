@@ -221,6 +221,16 @@ button.primary {
   fill: var(--window-off);
 }
 
+/* スマホ版でつまんでいる最中（指を離すまで）: 縁とつまみを一段明るくする。朱は使わない */
+.dial.held .dial-plate.grip {
+  stroke: var(--ink);
+  stroke-width: 3.4;
+}
+
+.dial.held .dial-grip {
+  fill: var(--ink);
+}
+
 /* 回した向きの軌跡: 内側の輪の外縁に沿った朱の弧を、約 0.3 秒で薄くして消す */
 .dial-trail {
   pointer-events: none;
@@ -1813,7 +1823,7 @@ button.b-btn {
  * 幅 1024px 未満、または高さ 600px 未満で切り替える（EXHIBITION.md「スマホ版」）。条件の文字列は src/layout.ts の
  * COMPACT_QUERY と同じ（JS 側の判定と食い違わないよう layout.test.ts が検査する）。
  * PC 版の「スクロールなし」は適用せず、縦スクロールを許す。横にははみ出させない。
- * 押せるものは 44px 以上。円盤の上（.dial-wrap）は touch-action: none でページをスクロールさせない（上の共通規則）。
+ * 押せるものは 44px 以上。円盤の上（.dial-wrap）は pan-y で縦スクロールを妨げず、長押しでつまんだときだけ回す（useGripGate。つまんでいる間のスクロール止めは JS の touchmove）。
  * 上のスタイルを上書きするので、同じ詳細度の規則はこのブロックを最後に置いている。
  */
 @media (max-width: 1023.98px), (max-height: 599.98px) {
@@ -1833,7 +1843,7 @@ button.b-btn {
 
   body {
     overflow: auto;
-    /* ダブルタップでの拡大を止める（↻ を素早く続けて押すと拡大してしまうため）。ピンチ拡大は残す。円盤の上は .dial-wrap の none が優先される */
+    /* ダブルタップでの拡大を止める（↻ を素早く続けて押すと拡大してしまうため）。ピンチ拡大は残す。円盤の上は .dial-wrap の pan-y が優先される */
     touch-action: manipulation;
   }
 
@@ -2207,6 +2217,14 @@ button.b-btn {
 
   .dial-holder > .dial-wrap {
     grid-column: 1 / -1;
+  }
+
+  /* 長押しでつまむ操作のため、縦スクロールは円盤の上でも効かせ、長押しで文字選択・メニューが出ないようにする */
+  .dial-wrap {
+    touch-action: pan-y;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .turn-btn,
