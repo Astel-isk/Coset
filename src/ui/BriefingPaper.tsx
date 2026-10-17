@@ -12,7 +12,7 @@ interface BriefingPaperProps {
 
 /**
  * ステージ前の説明の紙（EXHIBITION.md「ステージ前の説明」）。
- * ステージ名・規則・例の見出し・例の行・まとめ・共通の締めを上から並べる。
+ * ステージ名・規則・番号の付け方・例の見出し・例の行・まとめ・共通の締めを上から並べる。
  * stage.briefing の文字列を並べて描くだけで、計算はしない（暗号方式を知らない）。
  * 出ていない行も見えない状態で場所を取り、紙の大きさが途中で変わらないようにする。
  */
@@ -36,6 +36,7 @@ export function BriefingPaper({ stage, animate, titleId }: BriefingPaperProps) {
         {stage.title}
       </h2>
       <p className="briefing-rule">{briefing.rule}</p>
+      <p className="briefing-numbering">{briefing.numbering}</p>
       <p className="briefing-example-title">{briefing.exampleTitle}</p>
       <ol className={hasDisk ? 'briefing-steps has-disk' : 'briefing-steps'}>
         {briefing.steps.map((step, i) => (

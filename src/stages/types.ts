@@ -153,6 +153,8 @@ export interface BriefingStep {
 export interface Briefing {
   /** 規則（1〜2 行） */
   readonly rule: string;
+  /** 文字を番号に置き換える決まりの 1 行。例の行の `N(13)` が何を表すかを言う（stages/numbering.ts） */
+  readonly numbering: string;
   /** 例の見出し（例: 例: 鍵 13 で NEKO を暗号にする） */
   readonly exampleTitle: string;
   /** 例の単語を 1 文字ずつ暗号にする行（1 文字 1 行） */

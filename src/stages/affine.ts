@@ -1,4 +1,5 @@
 import { randomInt } from '../random';
+import { NUMBERING_NOTE } from './numbering';
 import { encrypt } from './affineStub'; // core/ciphers/affine.ts の実装後にここを差し替える
 import type { Given, NoteSet, Puzzle, Stage } from './types';
 import { firstWord } from './vigenere';
@@ -64,6 +65,7 @@ export const affineStage: Stage = {
   flavor: '最後の電文。円盤はもう使えない。鍵は a と b の 2 つ。読める文を探せ。',
   briefing: {
     rule: '文字の番号に a を掛けて b を足し、26 で割った余りの番号の文字にする。a と b の 2 つが鍵',
+    numbering: NUMBERING_NOTE,
     exampleTitle: '例: a = 3、b = 1 で NEKO を暗号にする',
     steps: [
       { plain: 'N(13)', formula: '3 × 13 + 1 = 40 → 余り 14', cipher: 'O' },

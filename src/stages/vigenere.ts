@@ -1,4 +1,5 @@
 import { randomInt } from '../random';
+import { NUMBERING_NOTE } from './numbering';
 import type { Given, NoteSet, Puzzle, Stage } from './types';
 import { encrypt } from './vigenereStub'; // core/ciphers/vigenere.ts の実装後にここを差し替える
 
@@ -102,6 +103,7 @@ export const vigenereStage: Stage = {
   briefing: {
     rule:
       'ずらす量を 1 文字ごとに ① ② ③ の順で替え、①②③①②③… とくり返す。空白は数えない。3 つのずらし量が鍵',
+    numbering: NUMBERING_NOTE,
     exampleTitle: '例: 鍵 ① 3・② 1・③ 4 で NEKO を暗号にする',
     steps: [
       { disk: 1, plain: 'N(13)', formula: '13 + 3 = 16', cipher: 'Q' },

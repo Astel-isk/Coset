@@ -118,6 +118,9 @@ describe('caesarStage.briefing（ステージ前の説明）', () => {
   it('規則・例の見出しがあり、例の見出しに鍵 13 と NEKO がある', () => {
     expect(briefing.rule).not.toBe('');
     expect(briefing.exampleTitle).toContain('鍵 13');
+    // N(13) が何を表すかを、ABC 順の番号の付け方として明言する
+    expect(briefing.numbering).toContain('A=0, B=1, C=2, …, Z=25');
+    expect(briefing.numbering).toContain('N(13)');
     expect(briefing.exampleTitle).toContain('NEKO');
   });
 });
