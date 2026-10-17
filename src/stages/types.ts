@@ -188,7 +188,11 @@ export interface Briefing {
 
 export interface Stage {
   readonly id: StageId;
-  /** 表示順。DESIGN.md §2 の表の番号に合わせる */
+  /**
+   * 表示順。簡易版は遊ぶ順（シーザー 1・ヴィジュネル 2・アフィン 3）に合わせる。
+   * DESIGN.md §2 の表の番号（アフィンが 2、ヴィジュネルが 3）とは入れ替わっている
+   * （武器が強くなる順に並べ替えた簡易版の暫定判断。EXHIBITION.md「ステージ 3: アフィン暗号」）
+   */
   readonly order: number;
   /** ステージ名（日本語） */
   readonly title: string;
