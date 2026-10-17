@@ -1,9 +1,10 @@
 /**
  * ヴィジュネル暗号の暗号化・復号の仮実装。
  *
- * 本人が src/core/ciphers/vigenere.ts を実装したら import を差し替えて削除する。
+ * 簡易版はこの仮実装のまま展示する（core の実装は本編へ回した。EXHIBITION.md「範囲外」）。
+ * 本編で src/core/ciphers/vigenere.ts を書いたら import を差し替えて削除する。
  * 差し替え先は stages/vigenere.ts と tools/MultiClock.tsx の import 各 1 行。
- * （core は本人の学習対象なので、仮実装は core に置かない。EXHIBITION.md「実装の構成」）
+ * （core は本編へ持ち越す部分なので、持ち越さない仮実装は core に置かない。EXHIBITION.md「実装の構成」）
  *
  * 鍵は 1 文字ぶんのずらし量の列で、n 番目（0 起点）の文字は keys[n mod keys.length] だけずらす。
  * 鍵の位置は A–Z の文字だけで進め、空白などは飛ばしてそのまま残す。

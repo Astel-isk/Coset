@@ -1,9 +1,10 @@
 /**
  * シーザー暗号の暗号化・復号の仮実装。
  *
- * 本人が src/core/ciphers/caesar.ts を実装したら import を差し替えて削除する。
+ * 簡易版はこの仮実装のまま展示する（core の実装は本編へ回した。EXHIBITION.md「範囲外」）。
+ * 本編で src/core/ciphers/caesar.ts を書いたら import を差し替えて削除する。
  * 差し替え先は stages/caesar.ts と tools/ModularClock.tsx の import 各 1 行。
- * （core は本人の学習対象なので、仮実装は core に置かない。EXHIBITION.md「実装の構成」）
+ * （core は本編へ持ち越す部分なので、持ち越さない仮実装は core に置かない。EXHIBITION.md「実装の構成」）
  */
 
 const MODULUS = 26;

@@ -32,7 +32,7 @@
 `dist/index.html` 単体でもダブルクリックで開ける。
 
 - 待機 → 傍受演出 → 説明 → 解読 → クリア → 解説の流れで、ステージ 1（シーザー暗号）・ステージ 2（ヴィジュネル暗号、円盤 3 枚と鍵の計算機）・ステージ 3（アフィン暗号、a・b の選択と計算機）を遊べる
-- 暗号化・復号は `src/stages/caesarStub.ts`・`vigenereStub.ts`・`affineStub.ts` の仮実装で代用しており、`src/core/` の実装後に差し替える
+- 暗号化・復号は `src/stages/caesarStub.ts`・`vigenereStub.ts`・`affineStub.ts` の仮実装で行う。`src/core/`（暗号・代数の純粋ロジック）の実装は本編へ回した（[EXHIBITION.md](EXHIBITION.md)「範囲外」）
 - 本編（DESIGN.md のロードマップ）は未着手
 
 ## 開発
