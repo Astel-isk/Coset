@@ -9,7 +9,8 @@
  * 開いたヒントの見出し・円盤の現在の鍵の目盛り・回転ボタンのホバーの枠には使わない（2026/10/16 に絞った。主ボタンを埋もれさせないため）。
  * 朱を地にして上に文字を載せるところだけ、少し濃い --accent-fill を使う（2026/10/18。生成りの文字が読める濃さにするため。下の :root）。
  * 灰色の補足の文（フレーバー・注記・案内・計算機の目的と例など）は、大きさ --note-size と色 --note-color の 1 種類にそろえる。
- * 平面的に描く（グラデーション・影・発光を使わない）。
+ * 平面的に描く。例外は解説画面の紙片の羊皮紙だけで、繊維のムラと縁の焼けにグラデーションを使う（2026/10/18 に緩めた）。
+ * 影と発光はどこにも使わない。
  */
 :root {
   color-scheme: dark;
@@ -21,6 +22,16 @@
   --disc: #101a26;
   --plate: #1f3247;
   --tick-off: #33465b;
+  /*
+   * 羊皮紙（解説の紙片だけ。電文とは別の紙という見立て）。
+   * 繊維のムラは SVG のノイズを敷き詰めて出す（外部の画像は読まない。data: URI で 0.4KB ほど）。
+   * 縁の焼けは .note の radial-gradient。--parchment-sub は、いちばん焼けた縁の上でも 4.78:1 を保つ濃さ
+   */
+  --parchment: #ecdfc4;
+  --parchment-ink: #2a2316;
+  --parchment-sub: #5c5231;
+  --parchment-rule: #c0ae88;
+  --parchment-fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
   /* 紙（電文） */
   --paper: #f3ecdc;
   --paper-ink: #1d1d1b;
@@ -1845,7 +1856,7 @@ button.b-btn {
 }
 
 /*
- * 紙片。影は使えない（上の「平面的に描く」）ので、重なりは切り口の細い罫で見せる。
+ * 紙片（羊皮紙）。影は使わない（上の「平面的に描く」）ので、重なりは切り口の細い罫で見せる。
  * わずかに傾け・ずらして机に置いた風にする。傾きは 1 度未満に留める（日本語の本文がぼけない範囲）。
  * 重なる量は紙片の余白より小さくしてあるので、下の紙片の文字は隠れない
  */
@@ -1858,10 +1869,15 @@ button.b-btn {
   /* 中の寸法はすべて em。紙片ごと縮められるようにする（上の .dense） */
   font-size: 1rem;
   padding: 0.9em 1.2em;
-  color: var(--paper-ink);
-  background: var(--paper);
-  border: 1px solid var(--paper-rule);
-  border-radius: 2px;
+  color: var(--parchment-ink);
+  background-color: var(--parchment);
+  /* 繊維のムラ（敷き詰めるノイズ）と、縁の焼け（中ほどから外へ暗くする） */
+  background-image:
+    var(--parchment-fiber),
+    radial-gradient(118% 145% at 50% 42%, rgba(255, 255, 255, 0) 50%, rgba(120, 94, 48, 0.3) 100%);
+  background-size: 160px 160px, auto;
+  background-blend-mode: multiply, multiply;
+  border: 1px solid var(--parchment-rule);
 }
 
 /*
@@ -1873,6 +1889,7 @@ button.b-btn {
   z-index: 2;
   width: 100%;
   justify-self: start;
+  border-radius: 2px 5px 3px 4px;
   transform: rotate(-1.1deg);
 }
 
@@ -1880,6 +1897,7 @@ button.b-btn {
   z-index: 1;
   width: 96%;
   justify-self: end;
+  border-radius: 5px 2px 4px 3px;
   transform: rotate(0.8deg) translateY(1.4vh);
 }
 
@@ -1887,6 +1905,7 @@ button.b-btn {
   z-index: 4;
   width: 95%;
   justify-self: start;
+  border-radius: 4px 3px 2px 5px;
   transform: rotate(1.3deg) translate(1.4vw, -2.2vh);
 }
 
@@ -1894,18 +1913,20 @@ button.b-btn {
   z-index: 3;
   width: 100%;
   justify-self: end;
+  border-radius: 3px 4px 5px 2px;
   transform: rotate(-0.7deg) translateY(-0.6vh);
 }
 
 .note:nth-child(5) {
   z-index: 5;
+  border-radius: 5px 3px 2px 4px;
   transform: rotate(0.5deg) translateY(-1vh);
 }
 
 .note-no {
   grid-row: 1;
   font: 700 1.45em/1.4 var(--mono);
-  color: var(--paper-sub);
+  color: var(--parchment-sub);
 }
 
 .note-title {
@@ -1913,7 +1934,7 @@ button.b-btn {
   margin: 0;
   font-size: 1.25em;
   line-height: 1.4;
-  color: var(--paper-ink);
+  color: var(--parchment-ink);
 }
 
 .note-body {
@@ -1931,9 +1952,9 @@ button.b-btn {
   padding: 0.5em 0;
   font: 700 1.02em/1.45 var(--mono);
   white-space: pre;
-  color: var(--paper-ink);
-  border-top: 1px dashed var(--paper-rule);
-  border-bottom: 1px dashed var(--paper-rule);
+  color: var(--parchment-ink);
+  border-top: 1px dashed var(--parchment-rule);
+  border-bottom: 1px dashed var(--parchment-rule);
 }
 
 
