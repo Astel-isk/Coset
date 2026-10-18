@@ -2,6 +2,8 @@
  * 展示用の画面（EXHIBITION.md「見た目」）。夜の解読室の机に、傍受した電文（紙）が置かれている見立て。
  * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
  * システムフォントのみ使い、外部リソースは参照しない。
+ * 書体は「紙は印刷・机はタイプ」で分ける: 紙の上の和文は明朝（--serif）、机の上の和文はゴシック（--sans）、等幅（--mono）はラテンと数字だけ。
+ * 角丸は使わない（例外は手順の番号の丸と、紙片の切り口のわずかな丸み）。枠は塗らず細い罫で囲む（2026/10/18）。
  * 色の約束: 朱（--accent）は 押すべきもの・見るべきもの・今選んでいるもの にだけ使う。具体的には
  * 主ボタン（これで解読）・円盤の読み取り窓と対応表の A の列の枠・判子・回した向きの軌跡・
  * 電文の文字に重ねたときの強調（電文・対応表・円盤）・鍵の計算機で選んだ列と今の手順の番号・
@@ -54,6 +56,12 @@
   --sans: 'Yu Gothic UI', 'Hiragino Sans', system-ui, sans-serif;
   --mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
   /*
+   * 紙の上の和文（電文・手引き・解説の紙片）は明朝にして印刷物に見せる。机の上（見出し・ボタン・ラベル）はゴシックのまま。
+   * 和文を等幅にすると monospace が MS ゴシックに落ちて 1990 年代の画面に見えるので、等幅はラテンと数字だけに使う。
+   * BIZ UD 明朝は可読性のために作られた書体で、Windows 10 以降に入っている（2026/10/18 追加）
+   */
+  --serif: 'BIZ UDPMincho', 'Yu Mincho', 'MS PMincho', serif;
+  /*
    * 文字と寸法の基準（rem）は、画面の幅と高さの小さいほうに合わせる（2026/10/16）。
    * 幅による値: 1366px で約 19px、1920px で約 22.5px。1.41vw は幅 1024px で約 14.4px（1366×768 と同じ 71rem 幅に収まる）。
    * 高さによる値: 2.5vh は高さ 768px で 19.2px、600px で 15px（1366×768 と同じ 40rem の高さに収まる）。
@@ -103,7 +111,7 @@ button {
   min-height: min(44px, 2.3rem); /* 1366×768 以上は 44px。小さい画面では rem に合わせて縮む */
   padding: 0.35em 1.1em;
   border: 2px solid var(--line);
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
 }
 
@@ -135,9 +143,9 @@ button.primary {
 
 .paper {
   --note-color: var(--paper-sub);
+  font-family: var(--serif);
   color: var(--paper-ink);
   background: var(--paper);
-  border-radius: 3px;
   padding: 1.2vh 1.6vw;
 }
 
@@ -354,7 +362,6 @@ button.primary {
   padding: 0.45em 2em;
   color: var(--paper);
   background: var(--accent-fill);
-  border-radius: 6px;
   font-size: 1.4rem;
   font-weight: 700;
 }
@@ -381,7 +388,6 @@ button.primary {
   display: block;
   width: 6.5rem;
   height: 6.5rem;
-  border-radius: 3px;
 }
 
 /* ---- 傍受演出 ---- */
@@ -784,7 +790,6 @@ button.restart.armed {
   height: var(--turn-h);
   min-height: 0;
   padding: 0;
-  border-radius: 14px;
   background: var(--bg);
 }
 
@@ -1078,7 +1083,6 @@ button.restart.armed {
   line-height: 1.4;
   white-space: nowrap;
   border: 2px solid var(--line);
-  border-radius: 6px;
 }
 
 button.hint.ready {
@@ -1097,8 +1101,7 @@ button.hint.ready {
   min-width: 0;
   padding: 0.4em 0.8em;
   white-space: normal;
-  background: var(--plate);
-  border-color: var(--plate);
+  border-width: 1px;
 }
 
 /* 見出しは生成り。本文の頭に続けて置く（行を使わないため） */
@@ -1197,7 +1200,6 @@ button.hint.ready {
 .multi-dial {
   padding: 0.25rem;
   border: 2px solid transparent;
-  border-radius: 6px;
 }
 
 .multi-dial.active {
@@ -1237,15 +1239,19 @@ button.hint.ready {
   flex-direction: column;
   gap: 0.05rem;
   min-width: 0;
-  padding: 0.3rem 0.8rem 0.4rem;
-  border: 2px solid var(--line);
-  border-radius: 6px;
+  padding: 0.4rem 0.8rem 0.5rem;
+  border: 1px solid var(--line);
 }
 
+/* 枠の見出しは、印刷物の表組みのように細い罫で本文と分ける */
 .calc-title {
+  padding-bottom: 0.2em;
+  margin-bottom: 0.25em;
+  border-bottom: 1px solid var(--line);
   font-weight: 700;
   font-size: 0.95rem;
   line-height: 1.35;
+  letter-spacing: 0.04em;
 }
 
 .calc-purpose,
@@ -1426,7 +1432,6 @@ button:disabled:hover {
 /* 最初の単語の列（手がかりのある列）は、クリックで暗号文と平文の両方が計算機に入る。乗せると薄い地で示す */
 .words .word .cell.pick {
   cursor: pointer;
-  border-radius: 3px;
 }
 
 .words .word .cell.colhov {
@@ -1438,7 +1443,6 @@ button:disabled:hover {
 .words .word .cell.sel {
   color: var(--paper);
   background: var(--accent-fill);
-  border-radius: 3px;
 }
 
 /* ---- 解読画面（アフィン表のツール） ----
@@ -1505,9 +1509,8 @@ button:disabled:hover {
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
-  padding: 0.3rem 0.8rem 0.45rem;
-  border: 2px solid var(--line);
-  border-radius: 6px;
+  padding: 0.4rem 0.8rem 0.55rem;
+  border: 1px solid var(--line);
 }
 
 .affine-ctl-head {
@@ -1553,7 +1556,6 @@ button.a-btn {
   padding: 0 0.1rem;
   font: 700 1rem/1 var(--mono);
   border-width: 2px;
-  border-radius: 4px;
 }
 
 /* 選んでいる a は朱で示す（どの a が使えるかは示さない。それは対応表の重なりで確かめる） */
@@ -1699,7 +1701,6 @@ button.b-btn {
   padding: 0.05em 0.5em 0.05em 0.7em;
   color: var(--accent);
   border: 4px solid var(--accent);
-  border-radius: 6px;
   font-size: 2.6rem;
   font-weight: 700;
   line-height: 1.3;
@@ -1813,6 +1814,7 @@ button.b-btn {
 .notes-title {
   font-size: 1.8rem;
   line-height: 1.3;
+  letter-spacing: 0.06em;
 }
 
 /*
@@ -1869,6 +1871,7 @@ button.b-btn {
   /* 中の寸法はすべて em。紙片ごと縮められるようにする（上の .dense） */
   font-size: 1rem;
   padding: 0.9em 1.2em;
+  font-family: var(--serif);
   color: var(--parchment-ink);
   background-color: var(--parchment);
   /* 繊維のムラ（敷き詰めるノイズ）と、縁の焼け（中ほどから外へ暗くする） */
@@ -1889,7 +1892,7 @@ button.b-btn {
   z-index: 2;
   width: 100%;
   justify-self: start;
-  border-radius: 2px 5px 3px 4px;
+  border-radius: 1px 3px 2px 2px;
   transform: rotate(-1.1deg);
 }
 
@@ -1897,7 +1900,7 @@ button.b-btn {
   z-index: 1;
   width: 96%;
   justify-self: end;
-  border-radius: 5px 2px 4px 3px;
+  border-radius: 3px 1px 2px 2px;
   transform: rotate(0.8deg) translateY(1.4vh);
 }
 
@@ -1905,7 +1908,7 @@ button.b-btn {
   z-index: 4;
   width: 95%;
   justify-self: start;
-  border-radius: 4px 3px 2px 5px;
+  border-radius: 2px 2px 1px 3px;
   transform: rotate(1.3deg) translate(1.4vw, -2.2vh);
 }
 
@@ -1913,13 +1916,13 @@ button.b-btn {
   z-index: 3;
   width: 100%;
   justify-self: end;
-  border-radius: 3px 4px 5px 2px;
+  border-radius: 2px 2px 3px 1px;
   transform: rotate(-0.7deg) translateY(-0.6vh);
 }
 
 .note:nth-child(5) {
   z-index: 5;
-  border-radius: 5px 3px 2px 4px;
+  border-radius: 3px 2px 1px 2px;
   transform: rotate(0.5deg) translateY(-1vh);
 }
 
@@ -2408,7 +2411,6 @@ button.b-btn {
     width: auto;
     height: 4rem;
     min-height: 44px;
-    border-radius: 14px;
   }
 
   .turn-arrow {
