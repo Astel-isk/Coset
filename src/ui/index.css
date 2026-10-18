@@ -2,7 +2,8 @@
  * 展示用の画面（EXHIBITION.md「見た目」）。夜の解読室の机に、傍受した電文（紙）が置かれている見立て。
  * 1920×1080 を基準に、1366×768 でもスクロールなしで収める。PC 室の全画面表示用なので配色は暗色固定。
  * システムフォントのみ使い、外部リソースは参照しない。
- * 書体は「紙は印刷・机はタイプ」で分ける: 紙の上の和文は明朝（--serif）、机の上の和文はゴシック（--sans）、等幅（--mono）はラテンと数字だけ。
+ * 和文はすべてゴシック（--sans）で、等幅（--mono）は電文・円盤の文字・記録番号・式に使う。
+ * 紙の上の和文だけ明朝にする案は 2026/10/18 に試して戻した（同じ画面に 2 つの書体が並ぶズレが気になるため。EXHIBITION.md）。
  * 角丸は使わない（例外は手順の番号の丸と、紙片の切り口のわずかな丸み）。枠は塗らず細い罫で囲む（2026/10/18）。
  * 色の約束: 朱（--accent）は 押すべきもの・見るべきもの・今選んでいるもの にだけ使う。具体的には
  * 主ボタン（これで解読）・円盤の読み取り窓と対応表の A の列の枠・判子・回した向きの軌跡・
@@ -55,12 +56,6 @@
   --note-color: var(--sub);
   --sans: 'Yu Gothic UI', 'Hiragino Sans', system-ui, sans-serif;
   --mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
-  /*
-   * 紙の上の和文（電文・手引き・解説の紙片）は明朝にして印刷物に見せる。机の上（見出し・ボタン・ラベル）はゴシックのまま。
-   * 和文を等幅にすると monospace が MS ゴシックに落ちて 1990 年代の画面に見えるので、等幅はラテンと数字だけに使う。
-   * BIZ UD 明朝は可読性のために作られた書体で、Windows 10 以降に入っている（2026/10/18 追加）
-   */
-  --serif: 'BIZ UDPMincho', 'Yu Mincho', 'MS PMincho', serif;
   /*
    * 文字と寸法の基準（rem）は、画面の幅と高さの小さいほうに合わせる（2026/10/16）。
    * 幅による値: 1366px で約 19px、1920px で約 22.5px。1.41vw は幅 1024px で約 14.4px（1366×768 と同じ 71rem 幅に収まる）。
@@ -143,7 +138,6 @@ button.primary {
 
 .paper {
   --note-color: var(--paper-sub);
-  font-family: var(--serif);
   color: var(--paper-ink);
   background: var(--paper);
   padding: 1.2vh 1.6vw;
@@ -1871,7 +1865,6 @@ button.b-btn {
   /* 中の寸法はすべて em。紙片ごと縮められるようにする（上の .dense） */
   font-size: 1rem;
   padding: 0.9em 1.2em;
-  font-family: var(--serif);
   color: var(--parchment-ink);
   background-color: var(--parchment);
   /* 繊維のムラ（敷き詰めるノイズ）と、縁の焼け（中ほどから外へ暗くする） */
