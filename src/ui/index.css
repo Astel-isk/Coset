@@ -1874,8 +1874,6 @@ button.b-btn {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: auto;
   align-content: center;
-  /* 紙片の高さは 1 枚ずつ中身に合わせる（段で引き伸ばすと、短いほうの下に地が余る） */
-  align-items: start;
   /* 紙片の間に机を見せる。重ねないので、この隙間だけで 1 枚ずつに見える */
   gap: 1.8vh 2vw;
 }
