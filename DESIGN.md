@@ -197,7 +197,7 @@ RSA の素因数分解はプレイヤーの仕事だが、**割り算の筆算�
 | 暗号演算 | 自前実装（number / BigInt） | RSA の大数に対応。実装自体が教材になる |
 | 状態管理 | Zustand | 軽量、進行状況管理に十分 |
 | テスト | Vitest | Vite と統合。暗号ロジック・攻撃ソルバーの正しさを自動検証 |
-| 配布 | 静的サイト（Cloudflare Workers の静的アセット、`coset.astelisk.com`） | サーバー不要。リポジトリが非公開でも無料で配信でき、本人の他の自作アプリと運用をそろえられる（2026 年 10 月 9 日に GitHub Pages / Vercel から変更） |
+| 配布 | 静的サイト（Cloudflare Workers の静的アセット、`coset.astelisk.com`） | サーバー不要。無料で配信でき、本人の他の自作アプリと運用をそろえられる（2026 年 10 月 9 日に GitHub Pages / Vercel から変更。当時はリポジトリが非公開で GitHub Pages を無料で使えなかった） |
 
 ### 設計上の方針
 
