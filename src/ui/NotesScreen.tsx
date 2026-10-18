@@ -35,7 +35,8 @@ export function NotesScreen({ stage, nextLabel, onNext, onBack, onRestart }: Not
           結果に戻る
         </button>
       </header>
-      <div className="notes-grid">
+      {/* 5 枚（ステージ 3）は 3 段になるので、紙片を一回り小さくして画面に収める */}
+      <div className={stage.notes.length >= 5 ? 'notes-grid dense' : 'notes-grid'}>
         {stage.notes.map((card, i) => (
           <section key={card.title} className="note">
             <p className="note-no">{i + 1}</p>
