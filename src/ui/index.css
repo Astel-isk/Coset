@@ -2669,7 +2669,7 @@ button.b-btn {
     font-size: 1.5rem;
   }
 
-  /* スマホ版は縦 1 列。紙片は傾けず、重ねない（1 枚ずつ読ませる） */
+  /* スマホ版は縦 1 列（1 枚ずつ読ませる） */
   .notes-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
@@ -2678,15 +2678,9 @@ button.b-btn {
   }
 
   .note,
-  .note:nth-child(1),
-  .note:nth-child(2),
-  .note:nth-child(3),
-  .note:nth-child(4),
-  .note:nth-child(5) {
+  .note:nth-child(5):last-child {
     width: auto;
-    margin: 0;
     padding: 1rem;
-    transform: none;
   }
 
   .note-body {
