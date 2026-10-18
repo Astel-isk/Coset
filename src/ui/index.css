@@ -1924,34 +1924,29 @@ button.b-btn {
 
 /*
 /*
- * 紙片ごとの傾きと四隅の丸み。机に置いた紙に見せるためだけのもので、意味は持たない。
- * ずらして重ねるのは 2026/10/18 にやめた（本文が読みづらいという本人の指摘。
- * 傾いた行が重なると目で追えない）。幅と寄せのばらつきも一緒に外し、紙片は升目に素直に置く。
- * 傾きは 0.5 度までに留める（1 度を超えると本文の行の傾きが分かってしまう）
+ * 紙片ごとの四隅の丸み。手で切った紙に見せるためだけのもので、意味は持たない。
+ * 2026/10/18 に、ずらして重ねるのをやめ（本文が読みづらい）、続けて傾きもやめた
+ * （解説画面だけ傾いているのが気になる、という本人の指摘。他の紙はどれも傾いていない）。
+ * 紙らしさは、紙の質感・切り口の罫・この丸みの 3 つが受け持つ
  */
 .note:nth-child(1) {
   border-radius: 1px 3px 2px 2px;
-  transform: rotate(-0.5deg);
 }
 
 .note:nth-child(2) {
   border-radius: 3px 1px 2px 2px;
-  transform: rotate(0.4deg);
 }
 
 .note:nth-child(3) {
   border-radius: 2px 2px 1px 3px;
-  transform: rotate(0.5deg);
 }
 
 .note:nth-child(4) {
   border-radius: 2px 2px 3px 1px;
-  transform: rotate(-0.35deg);
 }
 
 .note:nth-child(5) {
   border-radius: 3px 2px 1px 2px;
-  transform: rotate(0.3deg);
 }
 
 .note-no {
