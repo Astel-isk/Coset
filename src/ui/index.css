@@ -12,7 +12,7 @@
  * 開いたヒントの見出し・円盤の現在の鍵の目盛り・回転ボタンのホバーの枠には使わない（2026/10/16 に絞った。主ボタンを埋もれさせないため）。
  * 朱を地にして上に文字を載せるところだけ、少し濃い --accent-fill を使う（2026/10/18。生成りの文字が読める濃さにするため。下の :root）。
  * 灰色の補足の文（フレーバー・注記・案内・計算機の目的と例など）は、大きさ --note-size と色 --note-color の 1 種類にそろえる。
- * 平面的に描く。例外は解説画面の紙片の羊皮紙だけで、繊維のムラと縁の焼けにグラデーションを使う（2026/10/18 に緩めた）。
+ * 平面的に描く。例外は紙の質感だけで、繊維のムラと縁の焼けにグラデーションを使う（2026/10/18 に緩めた。電文・手引き・解説の紙片で同じ）。
  * 影と発光はどこにも使わない。
  */
 :root {
@@ -26,16 +26,11 @@
   --plate: #1f3247;
   --tick-off: #33465b;
   /*
-   * 羊皮紙（解説の紙片だけ。電文とは別の紙という見立て）。
-   * 繊維のムラは SVG のノイズを敷き詰めて出す（外部の画像は読まない。data: URI で 0.4KB ほど）。
-   * 縁の焼けは .note の radial-gradient。--parchment-sub は、いちばん焼けた縁の上でも 4.78:1 を保つ濃さ
+   * 紙の繊維のムラ。SVG のノイズを敷き詰めて出す（外部の画像は読まない。data: URI で 0.4KB ほど）。
+   * 電文・手引き・解説の紙片で同じものを使う（下の .paper, .note）
    */
-  --parchment: #ecdfc4;
-  --parchment-ink: #2a2316;
-  --parchment-sub: #5c5231;
-  --parchment-rule: #c0ae88;
-  --parchment-fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
-  /* 紙（電文） */
+  --paper-fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
+  /* 紙（電文・手引き・解説の紙片。すべて同じ材質にする） */
   --paper: #f3ecdc;
   --paper-ink: #1d1d1b;
   --paper-sub: #7a7363;
@@ -136,10 +131,24 @@ button.primary {
 
 /* ---- 紙（電文） ---- */
 
+/*
+ * 紙の地。電文・手引き・解説の紙片を同じ材質にする（2026/10/18。
+ * 解説の紙片だけ羊皮紙にしたら、そこで紙が切り替わって見えたため、色は生成りのままで材質をそろえた）。
+ * 繊維のムラ（敷き詰めるノイズ）と縁の焼け（中ほどから外へ暗くする）。「平面的に描く」の唯一の例外
+ */
+.paper,
+.note {
+  background-color: var(--paper);
+  background-image:
+    var(--paper-fiber),
+    radial-gradient(118% 145% at 50% 42%, rgba(255, 255, 255, 0) 55%, rgba(122, 101, 60, 0.18) 100%);
+  background-size: 160px 160px, auto;
+  background-blend-mode: multiply, multiply;
+}
+
 .paper {
   --note-color: var(--paper-sub);
   color: var(--paper-ink);
-  background: var(--paper);
   padding: 1.2vh 1.6vw;
 }
 
@@ -1852,7 +1861,7 @@ button.b-btn {
 }
 
 /*
- * 紙片（羊皮紙）。影は使わない（上の「平面的に描く」）ので、重なりは切り口の細い罫で見せる。
+ * 紙片。地は電文の紙と同じ（上の .paper, .note）。影は使わない（上の「平面的に描く」）ので、重なりは切り口の細い罫で見せる。
  * わずかに傾け・ずらして机に置いた風にする。傾きは 1 度未満に留める（日本語の本文がぼけない範囲）。
  * 重なる量は紙片の余白より小さくしてあるので、下の紙片の文字は隠れない
  */
@@ -1865,15 +1874,8 @@ button.b-btn {
   /* 中の寸法はすべて em。紙片ごと縮められるようにする（上の .dense） */
   font-size: 1rem;
   padding: 0.9em 1.2em;
-  color: var(--parchment-ink);
-  background-color: var(--parchment);
-  /* 繊維のムラ（敷き詰めるノイズ）と、縁の焼け（中ほどから外へ暗くする） */
-  background-image:
-    var(--parchment-fiber),
-    radial-gradient(118% 145% at 50% 42%, rgba(255, 255, 255, 0) 50%, rgba(120, 94, 48, 0.3) 100%);
-  background-size: 160px 160px, auto;
-  background-blend-mode: multiply, multiply;
-  border: 1px solid var(--parchment-rule);
+  color: var(--paper-ink);
+  border: 1px solid var(--paper-rule);
 }
 
 /*
@@ -1922,7 +1924,7 @@ button.b-btn {
 .note-no {
   grid-row: 1;
   font: 700 1.45em/1.4 var(--mono);
-  color: var(--parchment-sub);
+  color: var(--paper-sub);
 }
 
 .note-title {
@@ -1930,7 +1932,7 @@ button.b-btn {
   margin: 0;
   font-size: 1.25em;
   line-height: 1.4;
-  color: var(--parchment-ink);
+  color: var(--paper-ink);
 }
 
 .note-body {
@@ -1948,9 +1950,9 @@ button.b-btn {
   padding: 0.5em 0;
   font: 700 1.02em/1.45 var(--mono);
   white-space: pre;
-  color: var(--parchment-ink);
-  border-top: 1px dashed var(--parchment-rule);
-  border-bottom: 1px dashed var(--parchment-rule);
+  color: var(--paper-ink);
+  border-top: 1px dashed var(--paper-rule);
+  border-bottom: 1px dashed var(--paper-rule);
 }
 
 
